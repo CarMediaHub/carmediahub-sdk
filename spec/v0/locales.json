@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carmediahub.org/schema/locales/v0",
+  "title": "CarMediaHub Locale Contract v0",
+  "description": "Machine-readable design contract for platform locale propagation and message fallback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["default", "supported", "aliases", "fallback", "messageKeyPattern"],
+  "properties": {
+    "default": { "const": "en" },
+    "supported": { "type": "array", "const": ["en", "zh-CN", "ko"] },
+    "aliases": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "enum": ["en", "zh-CN", "ko"] },
+      "properties": { "zh": { "const": "zh-CN" }, "ko-KR": { "const": "ko" } }
+    },
+    "fallback": { "type": "array", "const": ["requested-locale", "language", "en"] },
+    "messageKeyPattern": { "type": "string", "const": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*)+$" },
+    "resourceRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "publicKeysRequire": { "type": "array", "const": ["en", "zh-CN", "ko"] },
+        "missingTranslation": { "enum": ["report-in-development", "fallback-to-en-in-production"] }
+      }
+    }
+  }
+}
