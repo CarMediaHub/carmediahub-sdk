@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.1",
+  "description": "Draft stable error catalog for CarMediaHub SDK v0.",
+  "errors": [
+    { "code": "CMH.CANCELLED", "retryable": false, "messageKey": "errors.cancelled" },
+    { "code": "CMH.CONFIG.INVALID", "retryable": false, "messageKey": "errors.config.invalid" },
+    { "code": "CMH.DB.SCOPE_DENIED", "retryable": false, "messageKey": "errors.db.scopeDenied" },
+    { "code": "CMH.DIAGNOSTICS.REDACTED", "retryable": false, "messageKey": "errors.diagnostics.redacted" },
+    { "code": "CMH.DISPLAY.UNSUPPORTED", "retryable": false, "messageKey": "errors.display.unsupported" },
+    { "code": "CMH.EVENTS.NOT_AUTHORIZED", "retryable": false, "messageKey": "errors.events.notAuthorized" },
+    { "code": "CMH.GATEWAY.ROUTE_CONFLICT", "retryable": false, "messageKey": "errors.gateway.routeConflict" },
+    { "code": "CMH.HISTORY.NOT_FOUND", "retryable": false, "messageKey": "errors.history.notFound" },
+    { "code": "CMH.JOBS.QUEUE_FULL", "retryable": true, "messageKey": "errors.jobs.queueFull" },
+    { "code": "CMH.MEDIA.QUOTA_EXCEEDED", "retryable": true, "messageKey": "errors.media.quotaExceeded" },
+    { "code": "CMH.NETWORK.TARGET_DENIED", "retryable": false, "messageKey": "errors.network.targetDenied" },
+    { "code": "CMH.PROTOCOL.BACKPRESSURE_LIMIT", "retryable": true, "messageKey": "errors.protocol.backpressureLimit" },
+    { "code": "CMH.PROTOCOL.DEADLINE_EXCEEDED", "retryable": true, "messageKey": "errors.protocol.deadlineExceeded" },
+    { "code": "CMH.PROTOCOL.HANDSHAKE_DENIED", "retryable": false, "messageKey": "errors.protocol.handshakeDenied" },
+    { "code": "CMH.PROTOCOL.INCOMPATIBLE_VERSION", "retryable": false, "messageKey": "errors.protocol.incompatibleVersion" },
+    { "code": "CMH.PROTOCOL.INVALID_FRAME", "retryable": false, "messageKey": "errors.protocol.invalidFrame" },
+    { "code": "CMH.STORAGE.ACCESS_DENIED", "retryable": false, "messageKey": "errors.storage.accessDenied" },
+    { "code": "CMH.TRANSFER.POLICY_DENIED", "retryable": false, "messageKey": "errors.transfer.policyDenied" },
+    { "code": "CMH.BROWSER.GRANT_REQUIRED", "retryable": false, "messageKey": "errors.browser.grantRequired" },
+    { "code": "CMH.CATALOG.INVALID_QUERY", "retryable": false, "messageKey": "errors.catalog.invalidQuery" }
+  ]
+}
