@@ -72,6 +72,39 @@ export interface PlatformRuntime {
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
 }
 
+export interface RpcScopeMeta {
+  deploymentId: string;
+  organizationId: string;
+  userId: string;
+  deviceId: string;
+  sessionId: string;
+}
+
+export interface RpcMeta {
+  schemaVersion: "0.1";
+  requestId: string;
+  traceId: string;
+  deadlineUnixMs: number;
+  installationId: string;
+  scope?: RpcScopeMeta;
+}
+
+export interface RpcRequest<T = unknown> {
+  jsonrpc: "2.0";
+  id?: string;
+  method: string;
+  params?: T;
+  meta: RpcMeta;
+}
+
+export interface RpcResponse<T = unknown> {
+  jsonrpc: "2.0";
+  id: string;
+  result?: T;
+  error?: CmhErrorShape;
+  meta: Pick<RpcMeta, "schemaVersion" | "requestId" | "traceId">;
+}
+
 export interface PluginRoute {
   path: string;
   methods: readonly ("GET" | "POST" | "PUT" | "PATCH" | "DELETE")[];
