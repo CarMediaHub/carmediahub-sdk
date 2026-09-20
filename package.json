@@ -1,0 +1,31 @@
+{
+  "name": "@carmediahub/sdk",
+  "version": "0.1.0",
+  "description": "Public plugin contracts for CarMediaHub.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "spec"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test src/**/*.test.ts",
+    "test:coverage": "tsx --test --experimental-test-coverage src/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
