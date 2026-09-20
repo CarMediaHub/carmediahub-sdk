@@ -4,6 +4,7 @@ export type RuntimeGroup = "shared-adapter-host" | "isolated-worker" | "wasm-mod
 
 export type CapabilityName =
   | "config"
+  | "secrets"
   | "db"
   | "storage"
   | "media"
@@ -44,6 +45,31 @@ export interface PlatformContext {
   display: DisplayContext;
   grantedCapabilities: readonly CapabilityName[];
   policyVersion: number;
+}
+
+export interface DataRecord<T = unknown> {
+  key: string;
+  value: T;
+  updatedAt: string;
+}
+
+/**
+ * A constrained logical data namespace. Implementations must bind every call
+ * to the calling organization, user, and plugin installation; plugins never
+ * receive a database DSN, schema name, or administrative SQL channel.
+ */
+export interface PluginDataStore {
+  get<T>(collection: string, key: string): Promise<DataRecord<T> | undefined>;
+  put<T>(collection: string, key: string, value: T): Promise<DataRecord<T>>;
+  delete(collection: string, key: string): Promise<boolean>;
+  list<T>(collection: string, options?: { prefix?: string; limit?: number }): Promise<readonly DataRecord<T>[]>;
+}
+
+export interface PlatformRuntime {
+  readonly context: PlatformContext;
+  require(capability: CapabilityName): void;
+  database(): PluginDataStore;
+  publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
 }
 
 export interface PluginRoute {

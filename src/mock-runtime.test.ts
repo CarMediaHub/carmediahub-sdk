@@ -23,6 +23,17 @@ test("publishes scoped events", () => {
   assert.equal(event.payload.source, "demo");
 });
 
+test("isolates logical plugin data by user and installation", async () => {
+  const sharedData = new Map();
+  const first = new MemoryRuntime({ ...context, grantedCapabilities: ["db"], scope: { ...context.scope, userId: "user-a", installationId: "plugin-one" } }, sharedData);
+  const otherUser = new MemoryRuntime({ ...context, grantedCapabilities: ["db"], scope: { ...context.scope, userId: "user-b", installationId: "plugin-one" } }, sharedData);
+  const otherInstallation = new MemoryRuntime({ ...context, grantedCapabilities: ["db"], scope: { ...context.scope, userId: "user-a", installationId: "plugin-two" } }, sharedData);
+  await first.database().put("history", "item-one", { title: "Private media" });
+  assert.deepEqual(await first.database().get("history", "item-one"), { key: "item-one", value: { title: "Private media" }, updatedAt: (await first.database().get("history", "item-one"))?.updatedAt });
+  assert.equal(await otherUser.database().get("history", "item-one"), undefined);
+  assert.equal(await otherInstallation.database().get("history", "item-one"), undefined);
+});
+
 test("rejects ungranted capability", () => {
   const runtime = new MemoryRuntime(context);
   assert.throws(() => runtime.require("network"), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
