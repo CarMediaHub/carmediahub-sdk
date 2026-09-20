@@ -2,7 +2,7 @@ import { CmhError } from "./error.js";
 import type { RpcRequest } from "./types.js";
 
 export const MAX_RPC_FRAME_BYTES = 1024 * 1024;
-const allowedPrefixes = ["lifecycle.", "context.", "capability.", "gateway.", "event.", "health.", "diagnostics.", "$/cancelRequest"];
+const allowedPrefixes = ["broker.", "worker.", "lifecycle.", "context.", "capability.", "gateway.", "event.", "health.", "diagnostics.", "$/cancelRequest"];
 const forbiddenPrefixes = ["policy.", "secret.", "runtime."];
 
 function protocolError(code: string, diagnosticId: string, retryable = false): CmhError {
