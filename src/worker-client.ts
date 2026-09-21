@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaProbe, MediaService, MediaTransformRequest, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -37,6 +37,7 @@ export interface WorkerClient {
   catalog(): CatalogService;
   display(): DisplayService;
   media(): MediaService;
+  network(): NetworkService;
   notifications(): NotificationService;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
   onContextChanged(handler: (context: WorkerContext) => void): void;
@@ -155,6 +156,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       probe: async (mediaId: string) => call("media.probe", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaProbe; }),
       requestTransform: async (mediaId: string, request: MediaTransformRequest) => call("media.transform", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; })
     }),
+    network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as NetworkResponse; }) }),
     notifications: () => ({
       publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as Notification; }),
       list: async (options = {}) => call("notifications.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { notifications: readonly Notification[] }).notifications; }),

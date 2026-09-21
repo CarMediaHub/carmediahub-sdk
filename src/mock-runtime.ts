@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { CmhError, denied } from "./error.js";
-import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
@@ -133,6 +133,10 @@ export class MemoryRuntime implements PlatformRuntime {
       probe: async (mediaId) => ({ mediaId, contentType: "video/mp4", size: 0, updatedAt: new Date(0).toISOString(), seekable: true, availableModes: ["direct-range" as const], recommendedMode: "direct-range" as const }),
       requestTransform: async (mediaId, request) => this.jobs().enqueue(`media.${request.mode}`, { mediaId, ...request })
     };
+  }
+
+  network(): NetworkService {
+    return { request: async () => { throw new CmhError({ code: "CMH.CAPABILITY.DENIED", messageKey: "errors.capability.denied", retryable: false, diagnosticId: "diag_network_mock_denied" }); } };
   }
 
   notifications(): NotificationService {

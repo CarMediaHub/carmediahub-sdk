@@ -174,6 +174,22 @@ export interface MediaService {
   requestTransform(mediaId: string, request: MediaTransformRequest): Promise<PluginJob>;
 }
 
+export interface NetworkRequest {
+  binding: string;
+  method: "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  headers?: Record<string, string>;
+  body?: string;
+}
+
+export interface NetworkResponse {
+  status: number;
+  headers: Record<string, string>;
+  bodyBase64?: string;
+}
+
+export interface NetworkService { request(input: NetworkRequest): Promise<NetworkResponse>; }
+
 export type NotificationSeverity = "info" | "success" | "warning" | "error";
 
 export interface Notification {
@@ -222,6 +238,7 @@ export interface PlatformRuntime {
   catalog(): CatalogService;
   display(): DisplayService;
   media(): MediaService;
+  network(): NetworkService;
   notifications(): NotificationService;
   jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
