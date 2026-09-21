@@ -1,4 +1,4 @@
-import { denied } from "./error.js";
+import { CmhError, denied } from "./error.js";
 import type { CapabilityName, DataRecord, DomainEvent, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
@@ -47,7 +47,10 @@ export class MemoryRuntime implements PlatformRuntime {
     return {
       enqueue: async (type, payload) => {
         if (!/^[a-z][a-z0-9_.-]{0,95}$/u.test(type)) throw new Error("job type must be a lowercase identifier");
-        if (JSON.stringify(payload) === undefined) throw new Error("job payload must be JSON serializable");
+        const payloadJson = JSON.stringify(payload);
+        if (payloadJson === undefined) throw new Error("job payload must be JSON serializable");
+        if (Buffer.byteLength(payloadJson, "utf8") > 64 * 1024) throw new CmhError({ code: "CMH.JOBS.PAYLOAD_TOO_LARGE", messageKey: "errors.jobs.payloadTooLarge", retryable: false, diagnosticId: "diag_jobs_payload_size" });
+        if ([...this.jobData.entries()].filter(([key, job]) => key.startsWith(prefix) && ["queued", "running"].includes(job.status)).length >= 10) throw new CmhError({ code: "CMH.JOBS.QUEUE_FULL", messageKey: "errors.jobs.queueFull", retryable: true, diagnosticId: "diag_jobs_queue_full", details: { limit: 10 } });
         const createdAt = new Date().toISOString();
         const job: PluginJob = { id: `job_${crypto.randomUUID()}`, type, status: "queued", progress: 0, payload, createdAt, updatedAt: createdAt };
         this.jobData.set(`${prefix}${job.id}`, job);
