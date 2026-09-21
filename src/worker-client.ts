@@ -177,6 +177,7 @@ function isWorkerContext(value: unknown): value is WorkerContext {
     && (candidate.density === "comfortable" || candidate.density === "compact")
     && (candidate.entry === "navigation" || candidate.entry === "key")
     && isDisplayContext(candidate.display)
+    && (candidate.grantedCapabilities === undefined || (Array.isArray(candidate.grantedCapabilities) && candidate.grantedCapabilities.every((capability) => typeof capability === "string")))
     && typeof candidate.policyVersion === "number" && Number.isSafeInteger(candidate.policyVersion) && candidate.policyVersion >= 1
     && scope !== undefined
     && typeof scope.deploymentId === "string" && typeof scope.organizationId === "string"

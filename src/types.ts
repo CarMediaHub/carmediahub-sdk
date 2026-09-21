@@ -37,6 +37,8 @@ export interface WorkerContext {
   density: "comfortable" | "compact";
   entry: "navigation" | "key";
   display: DisplayContext;
+  /** Read-only effective grants for this installation. Older brokers may omit it. */
+  grantedCapabilities?: readonly CapabilityName[];
   policyVersion: number;
 }
 
