@@ -11,6 +11,8 @@
     { "code": "CMH.GATEWAY.ROUTE_CONFLICT", "retryable": false, "messageKey": "errors.gateway.routeConflict" },
     { "code": "CMH.HISTORY.NOT_FOUND", "retryable": false, "messageKey": "errors.history.notFound" },
     { "code": "CMH.JOBS.QUEUE_FULL", "retryable": true, "messageKey": "errors.jobs.queueFull" },
+    { "code": "CMH.JOBS.PAYLOAD_TOO_LARGE", "retryable": false, "messageKey": "errors.jobs.payloadTooLarge" },
+    { "code": "CMH.JOBS.RESULT_TOO_LARGE", "retryable": false, "messageKey": "errors.jobs.resultTooLarge" },
     { "code": "CMH.MEDIA.QUOTA_EXCEEDED", "retryable": true, "messageKey": "errors.media.quotaExceeded" },
     { "code": "CMH.NETWORK.TARGET_DENIED", "retryable": false, "messageKey": "errors.network.targetDenied" },
     { "code": "CMH.PROTOCOL.BACKPRESSURE_LIMIT", "retryable": true, "messageKey": "errors.protocol.backpressureLimit" },
