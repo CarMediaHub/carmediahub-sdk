@@ -28,6 +28,7 @@ export interface GatewayWorkerResponse {
 
 export interface WorkerClient {
   close(): void;
+  call<T>(method: string, params?: unknown): Promise<T>;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
 }
 
@@ -100,5 +101,13 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   if ((hello.result as { type?: string } | undefined)?.type !== "broker.challenge") throw new Error("Broker handshake was denied");
   const welcome = await call("worker.prove", { runtimeCredential: options.runtimeCredential });
   if ((welcome.result as { type?: string } | undefined)?.type !== "broker.welcome") throw new Error("Broker handshake was denied");
-  return { close: () => socket.end(), onGatewayRequest: (handler) => { gatewayHandler = handler; } };
+  return {
+    close: () => socket.end(),
+    call: async <T>(method: string, params?: unknown) => {
+      const response = await call(method, params);
+      if (response.error !== undefined) throw new Error(response.error.messageKey);
+      return response.result as T;
+    },
+    onGatewayRequest: (handler) => { gatewayHandler = handler; }
+  };
 }
