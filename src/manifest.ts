@@ -2,6 +2,7 @@ import type { CapabilityName, Locale, PluginManifest, PluginRoute, RuntimeGroup 
 
 const manifestId = /^[a-z][a-z0-9-]{2,63}$/;
 const routePath = /^\/[a-zA-Z0-9/_-]*$/;
+const workerEntry = /^\.\/[a-zA-Z0-9_./-]+$/;
 const semver = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const knownCapabilities = new Set<CapabilityName>([
   "config", "db", "storage", "media", "history", "catalog", "display", "jobs", "events",
@@ -39,5 +40,7 @@ export function validateManifest(value: unknown): asserts value is PluginManifes
   if (!knownRuntimes.has(manifest.runtime as RuntimeGroup)) issues.push("runtime is not supported");
   if (!Array.isArray(manifest.capabilities) || manifest.capabilities.some((capability) => !knownCapabilities.has(capability))) issues.push("capabilities contains an unknown value");
   if (!Array.isArray(manifest.routes) || manifest.routes.some((route) => !validRoute(route))) issues.push("routes contains an invalid route");
+  if (manifest.worker !== undefined && (!workerEntry.test(manifest.worker.entry) || manifest.worker.entry.includes("..") || manifest.worker.protocol !== "0.1")) issues.push("worker entry or protocol is invalid");
+  if (manifest.runtime === "isolated-worker" && manifest.worker === undefined) issues.push("isolated-worker requires a worker entry");
   if (issues.length > 0) throw new ManifestValidationError(issues);
 }

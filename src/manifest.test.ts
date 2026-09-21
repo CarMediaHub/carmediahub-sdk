@@ -12,7 +12,8 @@ const manifest: PluginManifest = {
   category: "official",
   runtime: "isolated-worker",
   capabilities: ["storage", "media", "events"],
-  routes: [{ path: "/", methods: ["GET"] }]
+  routes: [{ path: "/", methods: ["GET"] }],
+  worker: { entry: "./worker.js", protocol: "0.1" }
 };
 
 test("validates a complete public manifest", () => {
@@ -22,4 +23,9 @@ test("validates a complete public manifest", () => {
 test("rejects missing translations and unknown capabilities", () => {
   const invalid = { ...manifest, name: { en: "Media" }, capabilities: ["shell"] };
   assert.throws(() => validateManifest(invalid), ManifestValidationError);
+});
+
+test("requires a safe explicit entry for isolated workers", () => {
+  assert.throws(() => validateManifest({ ...manifest, worker: { entry: "../worker.js", protocol: "0.1" } }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, worker: undefined }), ManifestValidationError);
 });

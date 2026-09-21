@@ -120,6 +120,8 @@ export interface PluginManifest {
   runtime: RuntimeGroup;
   capabilities: readonly CapabilityName[];
   routes: readonly PluginRoute[];
+  /** Relative package entry for an isolated Worker. Core resolves this only from a verified package. */
+  worker?: { entry: string; protocol: "0.1" };
   ui?: { entry: string; vehicleSupported: boolean };
 }
 
