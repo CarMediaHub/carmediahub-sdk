@@ -58,3 +58,11 @@ test("history is scoped, searchable, and clearable through the platform API", as
   assert.equal(await first.history().clear({ category: "movies" }), 1);
   assert.equal((await first.history().query()).length, 0);
 });
+
+test("catalog entries are scoped, searchable, and removable", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["catalog"] });
+  await runtime.catalog().register({ subjectType: "media", subjectId: "one", title: "Road trip", category: "video", route: "/stream" });
+  assert.equal((await runtime.catalog().query({ keyword: "road" })).length, 1);
+  assert.equal(await runtime.catalog().remove((await runtime.catalog().query())[0]!.id), true);
+  assert.equal((await runtime.catalog().query()).length, 0);
+});

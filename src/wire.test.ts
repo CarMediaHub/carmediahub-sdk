@@ -34,3 +34,10 @@ test("allows only the public history method namespace", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "history.clear" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "history.sql" }));
 });
+
+test("allows only the public catalog method namespace", () => {
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "catalog.register" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "catalog.query" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "catalog.remove" }));
+  assert.throws(() => validateWorkerRequest({ ...request, method: "catalog.sql" }));
+});

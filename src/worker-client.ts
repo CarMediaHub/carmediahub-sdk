@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { CatalogEntry, CatalogQuery, CatalogService, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -34,6 +34,7 @@ export interface WorkerClient {
   call<T>(method: string, params?: unknown): Promise<T>;
   jobs(): { enqueue(type: string, payload: unknown): Promise<PluginJob>; list(options?: { limit?: number }): Promise<readonly PluginJob[]>; cancel(id: string): Promise<PluginJob | undefined> };
   history(): HistoryService;
+  catalog(): CatalogService;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
   onContextChanged(handler: (context: WorkerContext) => void): void;
 }
@@ -136,6 +137,11 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       record: async (input) => call("history.record", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as HistoryEntry; }),
       query: async (options = {}) => call("history.query", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { entries: readonly HistoryEntry[] }).entries; }),
       clear: async (options = {}) => call("history.clear", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { cleared: number }).cleared; })
+    }),
+    catalog: () => ({
+      register: async (input) => call("catalog.register", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as CatalogEntry; }),
+      query: async (options = {}) => call("catalog.query", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { entries: readonly CatalogEntry[] }).entries; }),
+      remove: async (id) => call("catalog.remove", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { removed: boolean }).removed; })
     }),
     onGatewayRequest: (handler) => { gatewayHandler = handler; },
     onContextChanged: (handler) => { contextChangedHandler = handler; }

@@ -103,6 +103,31 @@ export interface HistoryService {
   clear(options?: Pick<HistoryQuery, "pluginId" | "category">): Promise<number>;
 }
 
+export interface CatalogEntry {
+  id: string;
+  pluginId: string;
+  subjectType: string;
+  subjectId: string;
+  title: string;
+  description?: string;
+  category: string;
+  route: string;
+  updatedAt: string;
+  metadataDigest?: string;
+}
+
+export interface CatalogQuery {
+  keyword?: string;
+  category?: string;
+  limit?: number;
+}
+
+export interface CatalogService {
+  register(input: Omit<CatalogEntry, "id" | "pluginId" | "updatedAt"> & { id?: string }): Promise<CatalogEntry>;
+  query(options?: CatalogQuery): Promise<readonly CatalogEntry[]>;
+  remove(id: string): Promise<boolean>;
+}
+
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
 /** A Core-owned asynchronous operation. Plugins request work but never receive an executor or command channel. */
@@ -130,6 +155,7 @@ export interface PlatformRuntime {
   require(capability: CapabilityName): void;
   database(): PluginDataStore;
   history(): HistoryService;
+  catalog(): CatalogService;
   jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
 }

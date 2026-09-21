@@ -2,9 +2,10 @@ import { CmhError } from "./error.js";
 import type { RpcRequest } from "./types.js";
 
 export const MAX_RPC_FRAME_BYTES = 1024 * 1024;
-const allowedPrefixes = ["broker.", "worker.", "lifecycle.", "context.", "capability.", "jobs.", "history.", "gateway.", "event.", "health.", "diagnostics.", "media.", "$/cancelRequest"];
+const allowedPrefixes = ["broker.", "worker.", "lifecycle.", "context.", "capability.", "jobs.", "history.", "catalog.", "gateway.", "event.", "health.", "diagnostics.", "media.", "$/cancelRequest"];
 const allowedJobMethods = new Set(["jobs.enqueue", "jobs.list", "jobs.cancel"]);
 const allowedHistoryMethods = new Set(["history.record", "history.query", "history.clear"]);
+const allowedCatalogMethods = new Set(["catalog.register", "catalog.query", "catalog.remove"]);
 const forbiddenPrefixes = ["policy.", "secret.", "runtime."];
 
 function protocolError(code: string, diagnosticId: string, retryable = false): CmhError {
@@ -46,7 +47,7 @@ export function validateWorkerRequest(value: unknown, nowUnixMs = Date.now()): a
   if (typeof value !== "object" || value === null) throw protocolError("CMH.PROTOCOL.INVALID_FRAME", "diag_rpc_object");
   const request = value as Partial<RpcRequest>;
   if (request.jsonrpc !== "2.0" || typeof request.method !== "string" || typeof request.meta !== "object" || request.meta === null) throw protocolError("CMH.PROTOCOL.INVALID_FRAME", "diag_rpc_shape");
-  if (forbiddenPrefixes.some((prefix) => request.method!.startsWith(prefix)) || !allowedPrefixes.some((prefix) => request.method === prefix || request.method!.startsWith(prefix)) || (request.method!.startsWith("jobs.") && !allowedJobMethods.has(request.method!)) || (request.method!.startsWith("history.") && !allowedHistoryMethods.has(request.method!))) throw protocolError("CMH.CAPABILITY.DENIED", "diag_rpc_method");
+  if (forbiddenPrefixes.some((prefix) => request.method!.startsWith(prefix)) || !allowedPrefixes.some((prefix) => request.method === prefix || request.method!.startsWith(prefix)) || (request.method!.startsWith("jobs.") && !allowedJobMethods.has(request.method!)) || (request.method!.startsWith("history.") && !allowedHistoryMethods.has(request.method!)) || (request.method!.startsWith("catalog.") && !allowedCatalogMethods.has(request.method!))) throw protocolError("CMH.CAPABILITY.DENIED", "diag_rpc_method");
   if (request.meta.schemaVersion !== "0.1" || !request.meta.requestId || !request.meta.traceId || !request.meta.installationId || !Number.isFinite(request.meta.deadlineUnixMs)) throw protocolError("CMH.PROTOCOL.INVALID_FRAME", "diag_rpc_meta");
   if (request.meta.deadlineUnixMs !== 0 && request.meta.deadlineUnixMs < nowUnixMs) throw protocolError("CMH.PROTOCOL.DEADLINE_EXCEEDED", "diag_rpc_deadline", true);
 }

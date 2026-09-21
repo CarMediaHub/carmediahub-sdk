@@ -1,9 +1,10 @@
 import { CmhError, denied } from "./error.js";
-import type { CapabilityName, DataRecord, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
   private readonly jobData = new Map<string, PluginJob>();
+  private readonly catalogData = new Map<string, CatalogEntry>();
 
   constructor(readonly context: PlatformContext, private readonly data = new Map<string, DataRecord>()) {}
 
@@ -91,6 +92,24 @@ export class MemoryRuntime implements PlatformRuntime {
         for (const record of entries) if ((options.pluginId === undefined || record.value.pluginId === options.pluginId) && (options.category === undefined || record.value.category === options.category) && await store.delete("history", record.key)) cleared += 1;
         return cleared;
       }
+    };
+  }
+
+  catalog(): CatalogService {
+    this.require("catalog");
+    const prefix = `${this.context.scope.organizationId}:${this.context.scope.userId}:${this.context.scope.installationId}:`;
+    return {
+      register: async (input) => {
+        if (!/^[a-z][a-z0-9_.-]{0,63}$/u.test(input.subjectType) || !/^[A-Za-z0-9._:-]{1,160}$/u.test(input.subjectId) || input.title.trim().length === 0 || !/^[a-z][a-z0-9_.-]{0,63}$/u.test(input.category) || !input.route.startsWith("/")) throw new Error("Invalid catalog entry");
+        const entry: CatalogEntry = { ...input, id: input.id ?? `catalog_${crypto.randomUUID()}`, pluginId: this.context.scope.installationId, title: input.title.trim(), updatedAt: new Date().toISOString() };
+        this.catalogData.set(prefix + entry.id, entry);
+        return entry;
+      },
+      query: async (options: CatalogQuery = {}) => {
+        const keyword = options.keyword?.trim().toLocaleLowerCase();
+        return [...this.catalogData.entries()].filter(([key]) => key.startsWith(prefix)).map(([, entry]) => entry).filter((entry) => (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.description ?? ""}`.toLocaleLowerCase().includes(keyword))).slice(0, Math.min(Math.max(options.limit ?? 100, 1), 500));
+      },
+      remove: async (id) => this.catalogData.delete(prefix + id)
     };
   }
 
