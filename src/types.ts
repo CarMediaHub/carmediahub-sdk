@@ -161,9 +161,17 @@ export interface MediaProbe {
   recommendedMode: MediaPlaybackMode;
 }
 
+export interface MediaTransformRequest {
+  mode: "remux" | "transcode";
+  container?: "mp4" | "fmp4" | "ts";
+  videoCodec?: "copy" | "h264" | "h265";
+  audioCodec?: "copy" | "aac" | "opus";
+}
+
 export interface MediaService {
   createPlayback(mediaId: string): Promise<PlaybackSession>;
   probe(mediaId: string): Promise<MediaProbe>;
+  requestTransform(mediaId: string, request: MediaTransformRequest): Promise<PluginJob>;
 }
 
 export type NotificationSeverity = "info" | "success" | "warning" | "error";

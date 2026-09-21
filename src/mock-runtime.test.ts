@@ -48,6 +48,13 @@ test("keeps job requests inside the current plugin scope", async () => {
   assert.equal((await first.jobs().cancel(job.id))?.status, "cancelled");
 });
 
+test("media transform requests become scoped jobs", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["media", "jobs"] });
+  const job = await runtime.media().requestTransform("media-1", { mode: "transcode", container: "mp4", videoCodec: "h264", audioCodec: "aac" });
+  assert.equal(job.type, "media.transcode");
+  assert.deepEqual(job.payload, { mediaId: "media-1", mode: "transcode", container: "mp4", videoCodec: "h264", audioCodec: "aac" });
+});
+
 test("history is scoped, searchable, and clearable through the platform API", async () => {
   const sharedData = new Map<string, DataRecord>();
   const first = new MemoryRuntime({ ...context, grantedCapabilities: ["db", "history"], scope: { ...context.scope, userId: "user-a", installationId: "plugin-one" } }, sharedData);
