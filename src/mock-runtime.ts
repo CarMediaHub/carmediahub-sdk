@@ -128,7 +128,10 @@ export class MemoryRuntime implements PlatformRuntime {
 
   media(): MediaService {
     this.require("media");
-    return { createPlayback: async (mediaId) => ({ sessionId: `playback_${mediaId}`, mediaId, expiresAt: new Date(Date.now() + 600_000).toISOString() }) };
+    return {
+      createPlayback: async (mediaId) => ({ sessionId: `playback_${mediaId}`, mediaId, expiresAt: new Date(Date.now() + 600_000).toISOString() }),
+      probe: async (mediaId) => ({ mediaId, contentType: "video/mp4", size: 0, updatedAt: new Date(0).toISOString(), seekable: true, availableModes: ["direct-range" as const], recommendedMode: "direct-range" as const })
+    };
   }
 
   notifications(): NotificationService {

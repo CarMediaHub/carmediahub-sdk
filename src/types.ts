@@ -147,8 +147,23 @@ export interface PlaybackSession {
   expiresAt: string;
 }
 
+export type MediaPlaybackMode = "direct-range" | "remux" | "transcode";
+
+export interface MediaProbe {
+  mediaId: string;
+  contentType: string;
+  size: number;
+  updatedAt: string;
+  container?: string;
+  durationMs?: number;
+  seekable: boolean;
+  availableModes: readonly MediaPlaybackMode[];
+  recommendedMode: MediaPlaybackMode;
+}
+
 export interface MediaService {
   createPlayback(mediaId: string): Promise<PlaybackSession>;
+  probe(mediaId: string): Promise<MediaProbe>;
 }
 
 export type NotificationSeverity = "info" | "success" | "warning" | "error";

@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaProbe, MediaService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -151,7 +151,8 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       requestMode: async (mode: DisplayMode) => call("display.requestMode", { mode }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as { mode: DisplayMode; accepted: boolean; reason?: "unsupported" | "user-action-required" }; })
     }),
     media: () => ({
-      createPlayback: async (mediaId: string) => call("media.createPlayback", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PlaybackSession; })
+      createPlayback: async (mediaId: string) => call("media.createPlayback", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PlaybackSession; }),
+      probe: async (mediaId: string) => call("media.probe", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaProbe; })
     }),
     notifications: () => ({
       publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as Notification; }),
