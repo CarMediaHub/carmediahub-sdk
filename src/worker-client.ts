@@ -15,11 +15,19 @@ export interface GatewayWorkerRequest {
   path: string;
   headers?: Record<string, string>;
   body?: unknown;
+  stream?: boolean;
+}
+
+export interface GatewayWorkerResponse {
+  status: number;
+  headers?: Record<string, string>;
+  /** A synchronous body is encoded as the normal JSON-RPC result; an async body is streamed. */
+  body?: unknown | AsyncIterable<Uint8Array | Buffer>;
 }
 
 export interface WorkerClient {
   close(): void;
-  onGatewayRequest(handler: (request: GatewayWorkerRequest) => Promise<unknown> | unknown): void;
+  onGatewayRequest(handler: (request: GatewayWorkerRequest) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
 }
 
 function request(id: string, installationId: string, method: string, params?: unknown): RpcRequest {
@@ -31,7 +39,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   const socket = net.createConnection(options.endpoint);
   const decoder = new FrameDecoder();
   const timeoutMs = options.timeoutMs ?? 30_000;
-  let gatewayHandler: ((request: GatewayWorkerRequest) => Promise<unknown> | unknown) | undefined;
+  let gatewayHandler: ((request: GatewayWorkerRequest) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown) | undefined;
   const pending = new Map<string, { resolve(value: RpcResponse): void; reject(error: Error): void }>();
   const fail = (error: Error) => { for (const entry of pending.values()) entry.reject(error); pending.clear(); };
   socket.on("error", fail);
@@ -48,7 +56,22 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
         }
         if (rpc.method === "gateway.request" && typeof rpc.id === "string") {
           void Promise.resolve(gatewayHandler?.(rpc.params as GatewayWorkerRequest) ?? { status: 503, body: { code: "CMH.WORKER.NOT_READY" } })
-            .then((result) => socket.write(encodeFrame({ jsonrpc: "2.0", id: rpc.id, result, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } })))
+            .then(async (result) => {
+              const response = result as GatewayWorkerResponse;
+              const body = response && typeof response === "object" ? response.body : undefined;
+              if ((rpc.params as GatewayWorkerRequest).stream && body !== null && typeof body === "object" && Symbol.asyncIterator in body) {
+                socket.write(encodeFrame({ jsonrpc: "2.0", method: "gateway.responseStart", params: { id: rpc.id, status: response.status, headers: response.headers }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
+                let sequence = 0;
+                for await (const chunk of body as AsyncIterable<Uint8Array | Buffer>) {
+                  const bytes = Buffer.from(chunk);
+                  socket.write(encodeFrame({ jsonrpc: "2.0", method: "gateway.responseChunk", params: { id: rpc.id, sequence, data: bytes.toString("base64") }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
+                  sequence += 1;
+                }
+                socket.write(encodeFrame({ jsonrpc: "2.0", method: "gateway.responseEnd", params: { id: rpc.id }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
+                return;
+              }
+              socket.write(encodeFrame({ jsonrpc: "2.0", id: rpc.id, result, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
+            })
             .catch((error: unknown) => socket.write(encodeFrame({ jsonrpc: "2.0", id: rpc.id, error: { code: "CMH.WORKER.REQUEST_FAILED", messageKey: "errors.worker.requestFailed", retryable: false, diagnosticId: "diag_worker_request" }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } })));
         }
       }
