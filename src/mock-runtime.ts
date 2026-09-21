@@ -1,10 +1,12 @@
+import crypto from "node:crypto";
 import { CmhError, denied } from "./error.js";
-import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
   private readonly jobData = new Map<string, PluginJob>();
   private readonly catalogData = new Map<string, CatalogEntry>();
+  private readonly notificationData = new Map<string, Notification>();
 
   constructor(readonly context: PlatformContext, private readonly data = new Map<string, DataRecord>()) {}
 
@@ -121,6 +123,21 @@ export class MemoryRuntime implements PlatformRuntime {
         if (mode === "fullscreen" && !this.context.display.fullscreenAvailable) return { mode, accepted: false, reason: "unsupported" as const };
         return { mode, accepted: true };
       }
+    };
+  }
+
+  notifications(): NotificationService {
+    this.require("events");
+    const prefix = `${this.context.scope.organizationId}:${this.context.scope.userId}:${this.context.scope.installationId}:`;
+    return {
+      publish: async (input) => {
+        if (!["info", "success", "warning", "error"].includes(input.severity) || input.title.trim().length === 0 || input.title.length > 160 || (input.body !== undefined && input.body.length > 4000)) throw new Error("Invalid notification");
+        const notification: Notification = { id: `notification_${crypto.randomUUID()}`, pluginId: this.context.scope.installationId, severity: input.severity, title: input.title.trim(), ...(input.body === undefined ? {} : { body: input.body }), createdAt: new Date().toISOString() };
+        this.notificationData.set(prefix + notification.id, notification);
+        return notification;
+      },
+      list: async (options = {}) => [...this.notificationData.entries()].filter(([key, value]) => key.startsWith(prefix) && (!options.unreadOnly || value.readAt === undefined)).map(([, value]) => value).slice(0, Math.min(Math.max(options.limit ?? 100, 1), 500)),
+      markRead: async (id) => { const key = prefix + id; const notification = this.notificationData.get(key); if (notification === undefined) return false; this.notificationData.set(key, { ...notification, readAt: new Date().toISOString() }); return true; }
     };
   }
 

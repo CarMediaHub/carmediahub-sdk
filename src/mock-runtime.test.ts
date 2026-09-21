@@ -73,3 +73,14 @@ test("display capability returns a copy and refuses unsupported fullscreen", asy
   assert.deepEqual(await runtime.display().requestMode("fullscreen"), { mode: "fullscreen", accepted: false, reason: "unsupported" });
   assert.deepEqual(await runtime.display().requestMode("normal"), { mode: "normal", accepted: true });
 });
+
+test("notifications are scoped and can be marked read", async () => {
+  const data = new Map();
+  const first = new MemoryRuntime(context, data);
+  const other = new MemoryRuntime({ ...context, scope: { ...context.scope, userId: "user-b" } }, data);
+  const notification = await first.notifications().publish({ severity: "warning", title: "Needs attention", body: "Check the media source" });
+  assert.equal((await first.notifications().list()).length, 1);
+  assert.deepEqual(await other.notifications().list(), []);
+  assert.equal(await first.notifications().markRead(notification.id), true);
+  assert.equal((await first.notifications().list({ unreadOnly: true })).length, 0);
+});

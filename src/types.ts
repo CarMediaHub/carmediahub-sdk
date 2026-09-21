@@ -141,6 +141,24 @@ export interface DisplayService {
   requestMode(mode: DisplayMode): Promise<DisplayModeResult>;
 }
 
+export type NotificationSeverity = "info" | "success" | "warning" | "error";
+
+export interface Notification {
+  id: string;
+  pluginId: string;
+  severity: NotificationSeverity;
+  title: string;
+  body?: string;
+  createdAt: string;
+  readAt?: string;
+}
+
+export interface NotificationService {
+  publish(input: { severity: NotificationSeverity; title: string; body?: string }): Promise<Notification>;
+  list(options?: { limit?: number; unreadOnly?: boolean }): Promise<readonly Notification[]>;
+  markRead(id: string): Promise<boolean>;
+}
+
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
 /** A Core-owned asynchronous operation. Plugins request work but never receive an executor or command channel. */
@@ -170,6 +188,7 @@ export interface PlatformRuntime {
   history(): HistoryService;
   catalog(): CatalogService;
   display(): DisplayService;
+  notifications(): NotificationService;
   jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
 }

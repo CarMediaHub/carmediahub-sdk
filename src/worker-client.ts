@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, Notification, NotificationService, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -36,6 +36,7 @@ export interface WorkerClient {
   history(): HistoryService;
   catalog(): CatalogService;
   display(): DisplayService;
+  notifications(): NotificationService;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
   onContextChanged(handler: (context: WorkerContext) => void): void;
 }
@@ -147,6 +148,11 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     display: () => ({
       capabilities: () => ({ ...currentContext.display, input: [...currentContext.display.input], viewport: { ...currentContext.display.viewport } }),
       requestMode: async (mode: DisplayMode) => call("display.requestMode", { mode }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as { mode: DisplayMode; accepted: boolean; reason?: "unsupported" | "user-action-required" }; })
+    }),
+    notifications: () => ({
+      publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as Notification; }),
+      list: async (options = {}) => call("notifications.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { notifications: readonly Notification[] }).notifications; }),
+      markRead: async (id) => call("notifications.markRead", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { marked: boolean }).marked; })
     }),
     onGatewayRequest: (handler) => { gatewayHandler = handler; },
     onContextChanged: (handler) => { contextChangedHandler = handler; }
