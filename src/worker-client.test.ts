@@ -76,3 +76,35 @@ test("worker client emits ordered response stream frames", async () => {
     if (process.platform !== "win32") fs.rmSync(path.dirname(address), { recursive: true, force: true });
   }
 });
+
+test("worker client aborts an active gateway request", async () => {
+  const address = endpoint();
+  let aborted = false;
+  const server = net.createServer((socket) => {
+    const decoder = new FrameDecoder();
+    socket.on("data", (chunk: Buffer) => {
+      for (const message of decoder.push(chunk)) {
+        const request = message as RpcRequest;
+        if (request.method === "broker.hello") socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.challenge" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+        else if (request.method === "worker.prove") {
+          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+          setTimeout(() => {
+            socket.write(encodeFrame({ jsonrpc: "2.0", id: "cancel_1", method: "gateway.request", params: { method: "GET", path: "/slow", stream: true }, meta: { schemaVersion: "0.1", requestId: "cancel_1", traceId: "cancel_1", deadlineUnixMs: Date.now() + 5_000, installationId: "plugin" } }));
+            setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", method: "$/cancelRequest", params: { id: "cancel_1", reason: "client disconnected" }, meta: { schemaVersion: "0.1", requestId: "cancel_1", traceId: "cancel_1", deadlineUnixMs: 0, installationId: "plugin" } })), 10);
+          }, 5);
+        }
+      }
+    });
+  });
+  await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(address, resolve); });
+  try {
+    const client = await connectWorkerClient({ endpoint: address, installationId: "plugin", runtimeCredential: "credential" });
+    client.onGatewayRequest((_request, signal) => new Promise((_resolve, reject) => { signal.addEventListener("abort", () => { aborted = true; reject(new Error("aborted")); }, { once: true }); }));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    assert.equal(aborted, true);
+    client.close();
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    if (process.platform !== "win32") fs.rmSync(path.dirname(address), { recursive: true, force: true });
+  }
+});

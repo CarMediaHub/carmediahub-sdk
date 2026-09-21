@@ -27,7 +27,7 @@ export interface GatewayWorkerResponse {
 
 export interface WorkerClient {
   close(): void;
-  onGatewayRequest(handler: (request: GatewayWorkerRequest) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
+  onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
 }
 
 function request(id: string, installationId: string, method: string, params?: unknown): RpcRequest {
@@ -39,7 +39,8 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   const socket = net.createConnection(options.endpoint);
   const decoder = new FrameDecoder();
   const timeoutMs = options.timeoutMs ?? 30_000;
-  let gatewayHandler: ((request: GatewayWorkerRequest) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown) | undefined;
+  let gatewayHandler: ((request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown) | undefined;
+  const activeGateway = new Map<string, AbortController>();
   const pending = new Map<string, { resolve(value: RpcResponse): void; reject(error: Error): void }>();
   const fail = (error: Error) => { for (const entry of pending.values()) entry.reject(error); pending.clear(); };
   socket.on("error", fail);
@@ -54,8 +55,15 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
           if (entry !== undefined) { pending.delete(rpc.id); entry.resolve(rpc); }
           continue;
         }
+        if (rpc.method === "$/cancelRequest") {
+          const id = (rpc.params as { id?: unknown } | undefined)?.id;
+          if (typeof id === "string") activeGateway.get(id)?.abort();
+          continue;
+        }
         if (rpc.method === "gateway.request" && typeof rpc.id === "string") {
-          void Promise.resolve(gatewayHandler?.(rpc.params as GatewayWorkerRequest) ?? { status: 503, body: { code: "CMH.WORKER.NOT_READY" } })
+          const controller = new AbortController();
+          activeGateway.set(rpc.id, controller);
+          void Promise.resolve(gatewayHandler?.(rpc.params as GatewayWorkerRequest, controller.signal) ?? { status: 503, body: { code: "CMH.WORKER.NOT_READY" } })
             .then(async (result) => {
               const response = result as GatewayWorkerResponse;
               const body = response && typeof response === "object" ? response.body : undefined;
@@ -67,12 +75,13 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
                   socket.write(encodeFrame({ jsonrpc: "2.0", method: "gateway.responseChunk", params: { id: rpc.id, sequence, data: bytes.toString("base64") }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
                   sequence += 1;
                 }
-                socket.write(encodeFrame({ jsonrpc: "2.0", method: "gateway.responseEnd", params: { id: rpc.id }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
+                if (!controller.signal.aborted) socket.write(encodeFrame({ jsonrpc: "2.0", method: "gateway.responseEnd", params: { id: rpc.id }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
                 return;
               }
-              socket.write(encodeFrame({ jsonrpc: "2.0", id: rpc.id, result, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
+              if (!controller.signal.aborted) socket.write(encodeFrame({ jsonrpc: "2.0", id: rpc.id, result, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } }));
             })
-            .catch((error: unknown) => socket.write(encodeFrame({ jsonrpc: "2.0", id: rpc.id, error: { code: "CMH.WORKER.REQUEST_FAILED", messageKey: "errors.worker.requestFailed", retryable: false, diagnosticId: "diag_worker_request" }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } })));
+            .catch(() => { if (!controller.signal.aborted && !socket.destroyed) socket.write(encodeFrame({ jsonrpc: "2.0", id: rpc.id, error: { code: "CMH.WORKER.REQUEST_FAILED", messageKey: "errors.worker.requestFailed", retryable: false, diagnosticId: "diag_worker_request" }, meta: { schemaVersion: "0.1", requestId: rpc.meta.requestId, traceId: rpc.meta.traceId } })); })
+            .finally(() => activeGateway.delete(rpc.id!));
         }
       }
     } catch (error) { fail(error instanceof Error ? error : new Error("Invalid broker frame")); socket.destroy(); }
