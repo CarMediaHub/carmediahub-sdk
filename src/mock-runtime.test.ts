@@ -38,3 +38,12 @@ test("rejects ungranted capability", () => {
   const runtime = new MemoryRuntime(context);
   assert.throws(() => runtime.require("network"), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });
+
+test("keeps job requests inside the current plugin scope", async () => {
+  const first = new MemoryRuntime({ ...context, grantedCapabilities: ["jobs"], scope: { ...context.scope, userId: "user-a", installationId: "plugin-one" } });
+  const second = new MemoryRuntime({ ...context, grantedCapabilities: ["jobs"], scope: { ...context.scope, userId: "user-b", installationId: "plugin-one" } });
+  const job = await first.jobs().enqueue("media.transcode", { source: "media-1" });
+  assert.equal((await first.jobs().list())[0]?.id, job.id);
+  assert.deepEqual(await second.jobs().list(), []);
+  assert.equal((await first.jobs().cancel(job.id))?.status, "cancelled");
+});

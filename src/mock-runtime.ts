@@ -1,8 +1,9 @@
 import { denied } from "./error.js";
-import type { CapabilityName, DataRecord, DomainEvent, PlatformContext, PlatformRuntime, PluginDataStore } from "./types.js";
+import type { CapabilityName, DataRecord, DomainEvent, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
+  private readonly jobData = new Map<string, PluginJob>();
 
   constructor(readonly context: PlatformContext, private readonly data = new Map<string, DataRecord>()) {}
 
@@ -36,6 +37,30 @@ export class MemoryRuntime implements PlatformRuntime {
         const maximum = Math.min(Math.max(options.limit ?? 100, 1), 1000);
         const match = `${prefix}${collection}:${options.prefix ?? ""}`;
         return [...this.data.entries()].filter(([address]) => address.startsWith(match)).slice(0, maximum).map(([, record]) => record as DataRecord<T>);
+      }
+    };
+  }
+
+  jobs(): PluginJobService {
+    this.require("jobs");
+    const prefix = `${this.context.scope.organizationId}:${this.context.scope.userId}:${this.context.scope.installationId}:`;
+    return {
+      enqueue: async (type, payload) => {
+        if (!/^[a-z][a-z0-9_.-]{0,95}$/u.test(type)) throw new Error("job type must be a lowercase identifier");
+        if (JSON.stringify(payload) === undefined) throw new Error("job payload must be JSON serializable");
+        const createdAt = new Date().toISOString();
+        const job: PluginJob = { id: `job_${crypto.randomUUID()}`, type, status: "queued", progress: 0, payload, createdAt, updatedAt: createdAt };
+        this.jobData.set(`${prefix}${job.id}`, job);
+        return job;
+      },
+      list: async (options = {}) => [...this.jobData.entries()].filter(([key]) => key.startsWith(prefix)).slice(0, Math.min(Math.max(options.limit ?? 100, 1), 500)).map(([, job]) => job),
+      cancel: async (id) => {
+        const key = `${prefix}${id}`;
+        const job = this.jobData.get(key);
+        if (job === undefined || !["queued", "running"].includes(job.status)) return undefined;
+        const updated: PluginJob = { ...job, status: "cancelled", updatedAt: new Date().toISOString(), completedAt: new Date().toISOString() };
+        this.jobData.set(key, updated);
+        return updated;
       }
     };
   }

@@ -77,10 +77,33 @@ export interface PluginDataStore {
   list<T>(collection: string, options?: { prefix?: string; limit?: number }): Promise<readonly DataRecord<T>[]>;
 }
 
+export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
+
+/** A Core-owned asynchronous operation. Plugins request work but never receive an executor or command channel. */
+export interface PluginJob {
+  id: string;
+  type: string;
+  status: JobStatus;
+  progress: number;
+  payload: unknown;
+  result?: unknown;
+  errorCode?: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+}
+
+export interface PluginJobService {
+  enqueue(type: string, payload: unknown): Promise<PluginJob>;
+  list(options?: { limit?: number }): Promise<readonly PluginJob[]>;
+  cancel(id: string): Promise<PluginJob | undefined>;
+}
+
 export interface PlatformRuntime {
   readonly context: PlatformContext;
   require(capability: CapabilityName): void;
   database(): PluginDataStore;
+  jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
 }
 
