@@ -47,3 +47,14 @@ test("keeps job requests inside the current plugin scope", async () => {
   assert.deepEqual(await second.jobs().list(), []);
   assert.equal((await first.jobs().cancel(job.id))?.status, "cancelled");
 });
+
+test("history is scoped, searchable, and clearable through the platform API", async () => {
+  const sharedData = new Map<string, DataRecord>();
+  const first = new MemoryRuntime({ ...context, grantedCapabilities: ["db", "history"], scope: { ...context.scope, userId: "user-a", installationId: "plugin-one" } }, sharedData);
+  const other = new MemoryRuntime({ ...context, grantedCapabilities: ["db", "history"], scope: { ...context.scope, userId: "user-b", installationId: "plugin-one" } }, sharedData);
+  await first.history().record({ subjectType: "media", subjectId: "movie-1", route: "/watch", title: "Road movie", category: "movies" });
+  assert.equal((await first.history().query({ keyword: "road" })).length, 1);
+  assert.equal((await other.history().query()).length, 0);
+  assert.equal(await first.history().clear({ category: "movies" }), 1);
+  assert.equal((await first.history().query()).length, 0);
+});

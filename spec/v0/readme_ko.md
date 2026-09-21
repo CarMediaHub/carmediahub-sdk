@@ -5,5 +5,6 @@
 - `manifest.schema.json`: v0 플러그인 패키지 매니페스트 구조
 - `errors.json`: v0에서 사용할 안정적인 오류 코드 목록
 - `jobs` capability는 현재 사용자와 플러그인 설치 인스턴스 범위로 제한됩니다. 초기 한도는 범위마다 활성 작업 10개이며 JSON payload와 결과는 각각 64 KiB입니다. 큐 또는 크기 초과는 안정적인 `CMH.JOBS.QUEUE_FULL`, `CMH.JOBS.PAYLOAD_TOO_LARGE`, `CMH.JOBS.RESULT_TOO_LARGE` 항목을 사용합니다.
+- `history` capability는 범위가 제한된 `record`, `query`, `clear` 작업을 제공합니다. 플러그인은 주제와 표시 메타데이터를 제출하고, Core가 사용자 격리, 보존 기간, 필터링과 삭제를 관리합니다.
 
 이 자료는 초안이며 Core 내부 구현, 호스트 경로, 자격 증명, 네트워크 토폴로지 또는 비공개 통합을 포함하지 않습니다.

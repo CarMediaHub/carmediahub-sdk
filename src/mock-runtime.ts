@@ -1,5 +1,5 @@
 import { CmhError, denied } from "./error.js";
-import type { CapabilityName, DataRecord, DomainEvent, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { CapabilityName, DataRecord, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
@@ -64,6 +64,32 @@ export class MemoryRuntime implements PlatformRuntime {
         const updated: PluginJob = { ...job, status: "cancelled", updatedAt: new Date().toISOString(), completedAt: new Date().toISOString() };
         this.jobData.set(key, updated);
         return updated;
+      }
+    };
+  }
+
+  history(): HistoryService {
+    this.require("history");
+    const store = this.database();
+    const pluginId = this.context.scope.installationId;
+    const sourceDevice = this.context.display.deviceClass;
+    return {
+      record: async (input) => {
+        if (!/^[a-z][a-z0-9_.-]{0,63}$/u.test(input.subjectType) || !/^[A-Za-z0-9._:-]{1,160}$/u.test(input.subjectId) || input.title.trim().length === 0 || !input.route.startsWith("/")) throw new Error("Invalid history entry");
+        const entry: HistoryEntry = { ...input, id: `history_${crypto.randomUUID()}`, pluginId, sourceDevice: input.sourceDevice ?? sourceDevice, title: input.title.trim(), visitedAt: new Date().toISOString() };
+        await store.put("history", entry.id, entry);
+        return entry;
+      },
+      query: async (options: HistoryQuery = {}) => {
+        const records = await store.list<HistoryEntry>("history", { limit: Math.min(Math.max(options.limit ?? 100, 1), 500) });
+        const keyword = options.keyword?.trim().toLocaleLowerCase();
+        return records.map((record) => record.value).filter((entry) => (options.pluginId === undefined || entry.pluginId === options.pluginId) && (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.route}`.toLocaleLowerCase().includes(keyword))).sort((left, right) => right.visitedAt.localeCompare(left.visitedAt));
+      },
+      clear: async (options = {}) => {
+        const entries = await store.list<HistoryEntry>("history", { limit: 500 });
+        let cleared = 0;
+        for (const record of entries) if ((options.pluginId === undefined || record.value.pluginId === options.pluginId) && (options.category === undefined || record.value.category === options.category) && await store.delete("history", record.key)) cleared += 1;
+        return cleared;
       }
     };
   }

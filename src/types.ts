@@ -77,6 +77,32 @@ export interface PluginDataStore {
   list<T>(collection: string, options?: { prefix?: string; limit?: number }): Promise<readonly DataRecord<T>[]>;
 }
 
+export interface HistoryEntry {
+  id: string;
+  subjectType: string;
+  subjectId: string;
+  pluginId: string;
+  route: string;
+  title: string;
+  category?: string;
+  visitedAt: string;
+  sourceDevice: DisplayContext["deviceClass"];
+  metadataDigest?: string;
+}
+
+export interface HistoryQuery {
+  pluginId?: string;
+  category?: string;
+  keyword?: string;
+  limit?: number;
+}
+
+export interface HistoryService {
+  record(input: Omit<HistoryEntry, "id" | "visitedAt" | "pluginId" | "sourceDevice"> & { sourceDevice?: DisplayContext["deviceClass"] }): Promise<HistoryEntry>;
+  query(options?: HistoryQuery): Promise<readonly HistoryEntry[]>;
+  clear(options?: Pick<HistoryQuery, "pluginId" | "category">): Promise<number>;
+}
+
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
 /** A Core-owned asynchronous operation. Plugins request work but never receive an executor or command channel. */
@@ -103,6 +129,7 @@ export interface PlatformRuntime {
   readonly context: PlatformContext;
   require(capability: CapabilityName): void;
   database(): PluginDataStore;
+  history(): HistoryService;
   jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
 }
