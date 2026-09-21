@@ -18,7 +18,7 @@ export interface GatewayWorkerRequest {
   body?: unknown;
   stream?: boolean;
   /** Core-injected platform values. Plugins must treat them as read-only. */
-  context?: Pick<PlatformContext, "locale" | "policyVersion">;
+  context?: Pick<PlatformContext, "locale" | "timeZone" | "theme" | "density" | "policyVersion">;
 }
 
 export interface GatewayWorkerResponse {
@@ -122,6 +122,9 @@ function isWorkerContext(value: unknown): value is WorkerContext {
   const candidate = value as Partial<WorkerContext> & { scope?: Partial<WorkerContext["scope"]> };
   const scope = candidate.scope;
   return (candidate.locale === "en" || candidate.locale === "zh-CN" || candidate.locale === "ko")
+    && typeof candidate.timeZone === "string" && candidate.timeZone.length > 0 && candidate.timeZone.length <= 80
+    && (candidate.theme === "light" || candidate.theme === "dark" || candidate.theme === "system")
+    && (candidate.density === "comfortable" || candidate.density === "compact")
     && typeof candidate.policyVersion === "number" && Number.isSafeInteger(candidate.policyVersion) && candidate.policyVersion >= 1
     && scope !== undefined
     && typeof scope.deploymentId === "string" && typeof scope.organizationId === "string"

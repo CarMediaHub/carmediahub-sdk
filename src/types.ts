@@ -32,6 +32,9 @@ export interface ScopeContext {
 export interface WorkerContext {
   scope: ScopeContext;
   locale: Locale;
+  timeZone: string;
+  theme: "light" | "dark" | "system";
+  density: "comfortable" | "compact";
   policyVersion: number;
 }
 

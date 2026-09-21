@@ -24,7 +24,7 @@ test("worker client completes local handshake and returns a logical gateway resp
         const request = message as RpcRequest;
         if (request.method === "broker.hello") socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.challenge" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
         else if (request.method === "worker.prove") {
-          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context: { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context: { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", timeZone: "UTC", theme: "system", density: "comfortable", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
           setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", id: "gateway_1", method: "gateway.request", params: { method: "GET", path: "/library", context: { locale: "ko", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: "gateway_1", traceId: "gateway_1", deadlineUnixMs: Date.now() + 5_000, installationId: "plugin" } })), 10);
         } else if (request.id === "gateway_1") resolveGateway((request as unknown as { result?: unknown }).result);
       }
@@ -54,7 +54,7 @@ test("worker client emits ordered response stream frames", async () => {
         const request = message as RpcRequest;
         if (request.method === "broker.hello") socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.challenge" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
         else if (request.method === "worker.prove") {
-          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context: { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context: { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", timeZone: "UTC", theme: "system", density: "comfortable", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
           setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", id: "stream_1", method: "gateway.request", params: { method: "GET", path: "/video", stream: true }, meta: { schemaVersion: "0.1", requestId: "stream_1", traceId: "stream_1", deadlineUnixMs: Date.now() + 5_000, installationId: "plugin" } })), 5);
         } else if ((request as unknown as { method?: string }).method?.startsWith("gateway.response")) {
           frames.push(request);
@@ -87,7 +87,7 @@ test("worker client aborts an active gateway request", async () => {
         const request = message as RpcRequest;
         if (request.method === "broker.hello") socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.challenge" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
         else if (request.method === "worker.prove") {
-          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context: { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context: { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", timeZone: "UTC", theme: "system", density: "comfortable", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
           setTimeout(() => {
             socket.write(encodeFrame({ jsonrpc: "2.0", id: "cancel_1", method: "gateway.request", params: { method: "GET", path: "/slow", stream: true }, meta: { schemaVersion: "0.1", requestId: "cancel_1", traceId: "cancel_1", deadlineUnixMs: Date.now() + 5_000, installationId: "plugin" } }));
             setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", method: "$/cancelRequest", params: { id: "cancel_1", reason: "client disconnected" }, meta: { schemaVersion: "0.1", requestId: "cancel_1", traceId: "cancel_1", deadlineUnixMs: 0, installationId: "plugin" } })), 10);
