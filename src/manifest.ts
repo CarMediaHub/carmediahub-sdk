@@ -41,6 +41,9 @@ export function validateManifest(value: unknown): asserts value is PluginManifes
   if (!Array.isArray(manifest.capabilities) || manifest.capabilities.some((capability) => !knownCapabilities.has(capability))) issues.push("capabilities contains an unknown value");
   if (!Array.isArray(manifest.routes) || manifest.routes.some((route) => !validRoute(route))) issues.push("routes contains an invalid route");
   if (manifest.worker !== undefined && (!workerEntry.test(manifest.worker.entry) || manifest.worker.entry.includes("..") || manifest.worker.protocol !== "0.1")) issues.push("worker entry or protocol is invalid");
+  if (manifest.runtimeEntry !== undefined && (!workerEntry.test(manifest.runtimeEntry.entry) || manifest.runtimeEntry.entry.includes("..") || manifest.runtimeEntry.protocol !== "0.1")) issues.push("runtime entry or protocol is invalid");
   if (manifest.runtime === "isolated-worker" && manifest.worker === undefined) issues.push("isolated-worker requires a worker entry");
+  if (manifest.runtime === "shared-adapter-host" && manifest.runtimeEntry === undefined) issues.push("shared-adapter-host requires a runtime entry");
+  if (manifest.runtime === "wasm-module" && manifest.runtimeEntry === undefined) issues.push("wasm-module requires a runtime entry");
   if (issues.length > 0) throw new ManifestValidationError(issues);
 }
