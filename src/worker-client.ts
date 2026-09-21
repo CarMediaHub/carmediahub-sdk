@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { PlatformContext, RpcRequest, RpcResponse } from "./types.js";
+import type { PlatformContext, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -29,6 +29,7 @@ export interface GatewayWorkerResponse {
 }
 
 export interface WorkerClient {
+  readonly context: WorkerContext;
   close(): void;
   call<T>(method: string, params?: unknown): Promise<T>;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
@@ -102,8 +103,10 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   const hello = await call("broker.hello", { workerVersion: "0.1" });
   if ((hello.result as { type?: string } | undefined)?.type !== "broker.challenge") throw new Error("Broker handshake was denied");
   const welcome = await call("worker.prove", { runtimeCredential: options.runtimeCredential });
-  if ((welcome.result as { type?: string } | undefined)?.type !== "broker.welcome") throw new Error("Broker handshake was denied");
+  const welcomeResult = welcome.result as { type?: string; context?: unknown } | undefined;
+  if (welcomeResult?.type !== "broker.welcome" || !isWorkerContext(welcomeResult.context)) throw new Error("Broker handshake was denied");
   return {
+    context: welcomeResult.context,
     close: () => socket.end(),
     call: async <T>(method: string, params?: unknown) => {
       const response = await call(method, params);
@@ -112,4 +115,16 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     },
     onGatewayRequest: (handler) => { gatewayHandler = handler; }
   };
+}
+
+function isWorkerContext(value: unknown): value is WorkerContext {
+  if (value === null || typeof value !== "object") return false;
+  const candidate = value as Partial<WorkerContext> & { scope?: Partial<WorkerContext["scope"]> };
+  const scope = candidate.scope;
+  return (candidate.locale === "en" || candidate.locale === "zh-CN" || candidate.locale === "ko")
+    && typeof candidate.policyVersion === "number" && Number.isSafeInteger(candidate.policyVersion) && candidate.policyVersion >= 1
+    && scope !== undefined
+    && typeof scope.deploymentId === "string" && typeof scope.organizationId === "string"
+    && typeof scope.userId === "string" && typeof scope.deviceId === "string"
+    && typeof scope.sessionId === "string" && typeof scope.installationId === "string";
 }

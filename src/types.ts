@@ -28,6 +28,13 @@ export interface ScopeContext {
   installationId: string;
 }
 
+/** Read-only identity and policy context established by the Core Broker handshake. */
+export interface WorkerContext {
+  scope: ScopeContext;
+  locale: Locale;
+  policyVersion: number;
+}
+
 export interface DisplayContext {
   deviceClass: "desktop" | "mobile" | "vehicle" | "unknown";
   input: Array<"touch" | "keyboard" | "pointer" | "remote">;
