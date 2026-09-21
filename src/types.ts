@@ -35,6 +35,8 @@ export interface WorkerContext {
   timeZone: string;
   theme: "light" | "dark" | "system";
   density: "comfortable" | "compact";
+  entry: "navigation" | "key";
+  display: DisplayContext;
   policyVersion: number;
 }
 

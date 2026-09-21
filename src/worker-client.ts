@@ -18,7 +18,7 @@ export interface GatewayWorkerRequest {
   body?: unknown;
   stream?: boolean;
   /** Core-injected platform values. Plugins must treat them as read-only. */
-  context?: Pick<PlatformContext, "locale" | "timeZone" | "theme" | "density" | "policyVersion">;
+  context?: Pick<PlatformContext, "locale" | "timeZone" | "theme" | "density" | "entry" | "display" | "policyVersion">;
 }
 
 export interface GatewayWorkerResponse {
@@ -125,9 +125,21 @@ function isWorkerContext(value: unknown): value is WorkerContext {
     && typeof candidate.timeZone === "string" && candidate.timeZone.length > 0 && candidate.timeZone.length <= 80
     && (candidate.theme === "light" || candidate.theme === "dark" || candidate.theme === "system")
     && (candidate.density === "comfortable" || candidate.density === "compact")
+    && (candidate.entry === "navigation" || candidate.entry === "key")
+    && isDisplayContext(candidate.display)
     && typeof candidate.policyVersion === "number" && Number.isSafeInteger(candidate.policyVersion) && candidate.policyVersion >= 1
     && scope !== undefined
     && typeof scope.deploymentId === "string" && typeof scope.organizationId === "string"
     && typeof scope.userId === "string" && typeof scope.deviceId === "string"
     && typeof scope.sessionId === "string" && typeof scope.installationId === "string";
+}
+
+function isDisplayContext(value: unknown): value is WorkerContext["display"] {
+  if (value === null || typeof value !== "object") return false;
+  const display = value as WorkerContext["display"];
+  return ["desktop", "mobile", "vehicle", "unknown"].includes(display.deviceClass)
+    && Array.isArray(display.input) && display.input.every((item) => ["touch", "keyboard", "pointer", "remote"].includes(item))
+    && typeof display.fullscreenAvailable === "boolean"
+    && Number.isSafeInteger(display.viewport?.width) && display.viewport.width >= 0
+    && Number.isSafeInteger(display.viewport?.height) && display.viewport.height >= 0;
 }
