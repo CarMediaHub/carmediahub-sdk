@@ -41,3 +41,8 @@ test("allows only the public catalog method namespace", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "catalog.remove" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "catalog.sql" }));
 });
+
+test("allows only the public display method namespace", () => {
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "display.requestMode" }));
+  assert.throws(() => validateWorkerRequest({ ...request, method: "display.executeScript" }));
+});

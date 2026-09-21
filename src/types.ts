@@ -128,6 +128,19 @@ export interface CatalogService {
   remove(id: string): Promise<boolean>;
 }
 
+export type DisplayMode = "normal" | "fullscreen";
+
+export interface DisplayModeResult {
+  mode: DisplayMode;
+  accepted: boolean;
+  reason?: "unsupported" | "user-action-required";
+}
+
+export interface DisplayService {
+  capabilities(): DisplayContext;
+  requestMode(mode: DisplayMode): Promise<DisplayModeResult>;
+}
+
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
 /** A Core-owned asynchronous operation. Plugins request work but never receive an executor or command channel. */
@@ -156,6 +169,7 @@ export interface PlatformRuntime {
   database(): PluginDataStore;
   history(): HistoryService;
   catalog(): CatalogService;
+  display(): DisplayService;
   jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
 }

@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { CatalogEntry, CatalogQuery, CatalogService, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -35,6 +35,7 @@ export interface WorkerClient {
   jobs(): { enqueue(type: string, payload: unknown): Promise<PluginJob>; list(options?: { limit?: number }): Promise<readonly PluginJob[]>; cancel(id: string): Promise<PluginJob | undefined> };
   history(): HistoryService;
   catalog(): CatalogService;
+  display(): DisplayService;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
   onContextChanged(handler: (context: WorkerContext) => void): void;
 }
@@ -142,6 +143,10 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       register: async (input) => call("catalog.register", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as CatalogEntry; }),
       query: async (options = {}) => call("catalog.query", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { entries: readonly CatalogEntry[] }).entries; }),
       remove: async (id) => call("catalog.remove", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { removed: boolean }).removed; })
+    }),
+    display: () => ({
+      capabilities: () => ({ ...currentContext.display, input: [...currentContext.display.input], viewport: { ...currentContext.display.viewport } }),
+      requestMode: async (mode: DisplayMode) => call("display.requestMode", { mode }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as { mode: DisplayMode; accepted: boolean; reason?: "unsupported" | "user-action-required" }; })
     }),
     onGatewayRequest: (handler) => { gatewayHandler = handler; },
     onContextChanged: (handler) => { contextChangedHandler = handler; }

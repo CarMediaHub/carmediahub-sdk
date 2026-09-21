@@ -1,5 +1,5 @@
 import { CmhError, denied } from "./error.js";
-import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
@@ -110,6 +110,17 @@ export class MemoryRuntime implements PlatformRuntime {
         return [...this.catalogData.entries()].filter(([key]) => key.startsWith(prefix)).map(([, entry]) => entry).filter((entry) => (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.description ?? ""}`.toLocaleLowerCase().includes(keyword))).slice(0, Math.min(Math.max(options.limit ?? 100, 1), 500));
       },
       remove: async (id) => this.catalogData.delete(prefix + id)
+    };
+  }
+
+  display(): DisplayService {
+    this.require("display");
+    return {
+      capabilities: () => ({ ...this.context.display, input: [...this.context.display.input], viewport: { ...this.context.display.viewport } }),
+      requestMode: async (mode: DisplayMode) => {
+        if (mode === "fullscreen" && !this.context.display.fullscreenAvailable) return { mode, accepted: false, reason: "unsupported" as const };
+        return { mode, accepted: true };
+      }
     };
   }
 

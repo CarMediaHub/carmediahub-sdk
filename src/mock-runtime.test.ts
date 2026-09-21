@@ -66,3 +66,10 @@ test("catalog entries are scoped, searchable, and removable", async () => {
   assert.equal(await runtime.catalog().remove((await runtime.catalog().query())[0]!.id), true);
   assert.equal((await runtime.catalog().query()).length, 0);
 });
+
+test("display capability returns a copy and refuses unsupported fullscreen", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["display"], display: { ...context.display, fullscreenAvailable: false } });
+  assert.deepEqual(runtime.display().capabilities(), { ...context.display, fullscreenAvailable: false });
+  assert.deepEqual(await runtime.display().requestMode("fullscreen"), { mode: "fullscreen", accepted: false, reason: "unsupported" });
+  assert.deepEqual(await runtime.display().requestMode("normal"), { mode: "normal", accepted: true });
+});
