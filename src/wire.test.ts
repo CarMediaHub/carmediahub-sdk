@@ -22,3 +22,8 @@ test("rejects invalid frame length and forbidden Core methods", () => {
 test("rejects expired worker deadlines", () => {
   assert.throws(() => validateWorkerRequest({ ...request, meta: { ...request.meta, deadlineUnixMs: 100 } }, 101), (error: unknown) => error instanceof CmhError && error.code === "CMH.PROTOCOL.DEADLINE_EXCEEDED");
 });
+
+test("allows only the public jobs method namespace", () => {
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "jobs.enqueue" }));
+  assert.throws(() => validateWorkerRequest({ ...request, method: "jobs.executeShell" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
+});
