@@ -3,3 +3,4 @@ export * from "./manifest.js";
 export * from "./mock-runtime.js";
 export * from "./types.js";
 export * from "./wire.js";
+export * from "./worker-client.js";
