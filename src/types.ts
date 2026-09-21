@@ -228,7 +228,7 @@ export interface RpcResponse<T = unknown> {
 
 export interface PluginRoute {
   path: string;
-  methods: readonly ("GET" | "POST" | "PUT" | "PATCH" | "DELETE")[];
+  methods: readonly ("GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE")[];
 }
 
 export interface PluginManifest {
