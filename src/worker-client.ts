@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { RpcRequest, RpcResponse } from "./types.js";
+import type { PlatformContext, RpcRequest, RpcResponse } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -17,6 +17,8 @@ export interface GatewayWorkerRequest {
   headers?: Record<string, string>;
   body?: unknown;
   stream?: boolean;
+  /** Core-injected platform values. Plugins must treat them as read-only. */
+  context?: Pick<PlatformContext, "locale" | "policyVersion">;
 }
 
 export interface GatewayWorkerResponse {

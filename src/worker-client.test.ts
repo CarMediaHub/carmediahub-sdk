@@ -25,7 +25,7 @@ test("worker client completes local handshake and returns a logical gateway resp
         if (request.method === "broker.hello") socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.challenge" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
         else if (request.method === "worker.prove") {
           socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
-          setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", id: "gateway_1", method: "gateway.request", params: { method: "GET", path: "/library" }, meta: { schemaVersion: "0.1", requestId: "gateway_1", traceId: "gateway_1", deadlineUnixMs: Date.now() + 5_000, installationId: "plugin" } })), 10);
+          setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", id: "gateway_1", method: "gateway.request", params: { method: "GET", path: "/library", context: { locale: "ko", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: "gateway_1", traceId: "gateway_1", deadlineUnixMs: Date.now() + 5_000, installationId: "plugin" } })), 10);
         } else if (request.id === "gateway_1") resolveGateway((request as unknown as { result?: unknown }).result);
       }
     });
@@ -33,8 +33,8 @@ test("worker client completes local handshake and returns a logical gateway resp
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(address, resolve); });
   try {
     const client = await connectWorkerClient({ endpoint: address, installationId: "plugin", runtimeCredential: "credential" });
-    client.onGatewayRequest((input) => ({ status: 200, body: input.path }));
-    assert.deepEqual(await gatewayResponse, { status: 200, body: "/library" });
+    client.onGatewayRequest((input) => ({ status: 200, body: { path: input.path, locale: input.context?.locale } }));
+    assert.deepEqual(await gatewayResponse, { status: 200, body: { path: "/library", locale: "ko" } });
     client.close();
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
