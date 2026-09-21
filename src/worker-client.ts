@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { HistoryEntry, HistoryQuery, HistoryService, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -33,6 +33,7 @@ export interface WorkerClient {
   close(): void;
   call<T>(method: string, params?: unknown): Promise<T>;
   jobs(): { enqueue(type: string, payload: unknown): Promise<PluginJob>; list(options?: { limit?: number }): Promise<readonly PluginJob[]>; cancel(id: string): Promise<PluginJob | undefined> };
+  history(): HistoryService;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
   onContextChanged(handler: (context: WorkerContext) => void): void;
 }
@@ -130,6 +131,11 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       enqueue: async (type, payload) => call("jobs.enqueue", { type, payload }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
       list: async (options = {}) => call("jobs.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { jobs: readonly PluginJob[] }).jobs; }),
       cancel: async (id) => call("jobs.cancel", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { job?: PluginJob }).job; })
+    }),
+    history: () => ({
+      record: async (input) => call("history.record", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as HistoryEntry; }),
+      query: async (options = {}) => call("history.query", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { entries: readonly HistoryEntry[] }).entries; }),
+      clear: async (options = {}) => call("history.clear", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { cleared: number }).cleared; })
     }),
     onGatewayRequest: (handler) => { gatewayHandler = handler; },
     onContextChanged: (handler) => { contextChangedHandler = handler; }
