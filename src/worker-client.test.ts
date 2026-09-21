@@ -110,3 +110,31 @@ test("worker client aborts an active gateway request", async () => {
     if (process.platform !== "win32") fs.rmSync(path.dirname(address), { recursive: true, force: true });
   }
 });
+
+test("worker client applies broker context changes without reconnecting", async () => {
+  const address = endpoint();
+  const server = net.createServer((socket) => {
+    const decoder = new FrameDecoder();
+    socket.on("data", (chunk: Buffer) => {
+      for (const message of decoder.push(chunk)) {
+        const request = message as RpcRequest;
+        if (request.method === "broker.hello") socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.challenge" }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+        else if (request.method === "worker.prove") {
+          const context = { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", timeZone: "UTC", theme: "system", density: "comfortable", entry: "navigation", display: { deviceClass: "unknown", input: [], fullscreenAvailable: false, viewport: { width: 0, height: 0 } }, policyVersion: 1 } as const;
+          socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+          setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change", traceId: "context-change", deadlineUnixMs: 0, installationId: "plugin" } })), 10);
+        }
+      }
+    });
+  });
+  await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(address, resolve); });
+  try {
+    const client = await connectWorkerClient({ endpoint: address, installationId: "plugin", runtimeCredential: "credential" });
+    const changed = new Promise<void>((resolve) => client.onContextChanged((context) => { assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); assert.equal(client.context.policyVersion, 2); resolve(); }));
+    await changed;
+    client.close();
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    if (process.platform !== "win32") fs.rmSync(path.dirname(address), { recursive: true, force: true });
+  }
+});

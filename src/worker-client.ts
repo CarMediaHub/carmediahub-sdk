@@ -33,6 +33,7 @@ export interface WorkerClient {
   close(): void;
   call<T>(method: string, params?: unknown): Promise<T>;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
+  onContextChanged(handler: (context: WorkerContext) => void): void;
 }
 
 function request(id: string, installationId: string, method: string, params?: unknown): RpcRequest {
@@ -45,6 +46,8 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   const decoder = new FrameDecoder();
   const timeoutMs = options.timeoutMs ?? 30_000;
   let gatewayHandler: ((request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown) | undefined;
+  let currentContext: WorkerContext;
+  let contextChangedHandler: ((context: WorkerContext) => void) | undefined;
   const activeGateway = new Map<string, AbortController>();
   const pending = new Map<string, { resolve(value: RpcResponse): void; reject(error: Error): void }>();
   const fail = (error: Error) => { for (const entry of pending.values()) entry.reject(error); pending.clear(); };
@@ -63,6 +66,14 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
         if (rpc.method === "$/cancelRequest") {
           const id = (rpc.params as { id?: unknown } | undefined)?.id;
           if (typeof id === "string") activeGateway.get(id)?.abort();
+          continue;
+        }
+        if (rpc.method === "context.changed") {
+          const changed = (rpc.params as { context?: unknown } | undefined)?.context;
+          if (isWorkerContext(changed)) {
+            currentContext = changed;
+            contextChangedHandler?.(changed);
+          }
           continue;
         }
         if (rpc.method === "gateway.request" && typeof rpc.id === "string") {
@@ -105,15 +116,17 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   const welcome = await call("worker.prove", { runtimeCredential: options.runtimeCredential });
   const welcomeResult = welcome.result as { type?: string; context?: unknown } | undefined;
   if (welcomeResult?.type !== "broker.welcome" || !isWorkerContext(welcomeResult.context)) throw new Error("Broker handshake was denied");
+  currentContext = welcomeResult.context;
   return {
-    context: welcomeResult.context,
+    get context() { return currentContext; },
     close: () => socket.end(),
     call: async <T>(method: string, params?: unknown) => {
       const response = await call(method, params);
       if (response.error !== undefined) throw new Error(response.error.messageKey);
       return response.result as T;
     },
-    onGatewayRequest: (handler) => { gatewayHandler = handler; }
+    onGatewayRequest: (handler) => { gatewayHandler = handler; },
+    onContextChanged: (handler) => { contextChangedHandler = handler; }
   };
 }
 
