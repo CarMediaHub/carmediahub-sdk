@@ -141,6 +141,16 @@ export interface DisplayService {
   requestMode(mode: DisplayMode): Promise<DisplayModeResult>;
 }
 
+export interface PlaybackSession {
+  sessionId: string;
+  mediaId: string;
+  expiresAt: string;
+}
+
+export interface MediaService {
+  createPlayback(mediaId: string): Promise<PlaybackSession>;
+}
+
 export type NotificationSeverity = "info" | "success" | "warning" | "error";
 
 export interface Notification {
@@ -188,6 +198,7 @@ export interface PlatformRuntime {
   history(): HistoryService;
   catalog(): CatalogService;
   display(): DisplayService;
+  media(): MediaService;
   notifications(): NotificationService;
   jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;

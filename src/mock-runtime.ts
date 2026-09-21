@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { CmhError, denied } from "./error.js";
-import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
@@ -124,6 +124,11 @@ export class MemoryRuntime implements PlatformRuntime {
         return { mode, accepted: true };
       }
     };
+  }
+
+  media(): MediaService {
+    this.require("media");
+    return { createPlayback: async (mediaId) => ({ sessionId: `playback_${mediaId}`, mediaId, expiresAt: new Date(Date.now() + 600_000).toISOString() }) };
   }
 
   notifications(): NotificationService {
