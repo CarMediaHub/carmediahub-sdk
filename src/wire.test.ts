@@ -54,5 +54,6 @@ test("allows only the public notification method namespace", () => {
 
 test("allows media probing but rejects unlisted media methods", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "media.probe" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "media.transform" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "media.exec" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });
