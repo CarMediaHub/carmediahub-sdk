@@ -12,6 +12,7 @@ Plugins use these public contracts without importing Core internals.
 - `onContextChanged`: plugins can update their UI when Core preferences change without implementing a second language or display settings system.
 - `normalizeLocale`, `localeFallbacks` and `localize`: shared locale aliases and requested-locale/language/English fallback for plugin text.
 - Capability APIs for scoped data, media, history, catalog, display, jobs, notifications, network, and events.
+- `WorkerClient.database()`: logical `get`/`put`/`delete`/`list` operations through the Broker; Core binds every call to the organization, user, and plugin installation scope.
 - `WorkerClient` and the Wire Protocol: plugins use logical routes through the Broker without public listeners or access to database connections, host paths, or session cookies.
 - `Memory Runtime` for contract tests. It is not a production storage or media executor.
 

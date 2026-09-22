@@ -73,3 +73,8 @@ test("allows only opaque browser session methods", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.task.cancel" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "browser.cdp.connect" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });
+
+test("allows only logical plugin data methods", () => {
+  for (const method of ["data.get", "data.put", "data.delete", "data.list"]) assert.doesNotThrow(() => validateWorkerRequest({ ...request, method }));
+  assert.throws(() => validateWorkerRequest({ ...request, method: "data.sql" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
+});

@@ -12,6 +12,7 @@ CarMediaHub SDK는 플러그인 매니페스트, 수명 주기 계약, 플랫폼
 - `onContextChanged`: Core의 공통 설정이 바뀌면 플러그인이 별도의 언어 또는 표시 설정 시스템 없이 UI를 갱신할 수 있습니다.
 - `normalizeLocale`, `localeFallbacks`, `localize`: 공통 언어 별칭과 요청 언어 -> 언어 계열 -> 영어 순서의 문구 fallback을 제공합니다.
 - 데이터, 미디어, 기록, 카탈로그, 표시, 작업, 알림, 네트워크 및 이벤트를 설치 인스턴스 권한으로 제한하는 Capability API를 제공합니다.
+- `WorkerClient.database()`: Broker를 통한 논리적 `get`/`put`/`delete`/`list` 작업을 제공하며, Core가 조직·사용자·플러그인 설치 인스턴스 범위에 모든 호출을 바인딩합니다.
 - `WorkerClient`와 Wire Protocol을 통해 Broker의 논리 경로를 사용하며 공개 포트, 데이터베이스 연결, 호스트 경로 또는 세션 Cookie에 접근하지 않습니다.
 - `Memory Runtime`은 계약 테스트용이며 운영 저장소나 미디어 실행기를 의미하지 않습니다.
 

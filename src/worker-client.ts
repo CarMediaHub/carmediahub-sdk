@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -33,6 +33,7 @@ export interface WorkerClient {
   close(): void;
   call<T>(method: string, params?: unknown): Promise<T>;
   jobs(): { enqueue(type: string, payload: unknown): Promise<PluginJob>; list(options?: { limit?: number }): Promise<readonly PluginJob[]>; cancel(id: string): Promise<PluginJob | undefined> };
+  database(): PluginDataStore;
   history(): HistoryService;
   catalog(): CatalogService;
   display(): DisplayService;
@@ -137,6 +138,12 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       enqueue: async (type, payload) => call("jobs.enqueue", { type, payload }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
       list: async (options = {}) => call("jobs.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { jobs: readonly PluginJob[] }).jobs; }),
       cancel: async (id) => call("jobs.cancel", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { job?: PluginJob }).job; })
+    }),
+    database: () => ({
+      get: async <T>(collection: string, key: string) => call("data.get", { collection, key }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { record?: DataRecord<T> }).record; }),
+      put: async <T>(collection: string, key: string, value: T) => call("data.put", { collection, key, value }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { record: DataRecord<T> }).record; }),
+      delete: async (collection: string, key: string) => call("data.delete", { collection, key }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { deleted: boolean }).deleted; }),
+      list: async <T>(collection: string, options: { prefix?: string; limit?: number } = {}) => call("data.list", { collection, ...options }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { records: readonly DataRecord<T>[] }).records; })
     }),
     history: () => ({
       record: async (input) => call("history.record", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as HistoryEntry; }),
