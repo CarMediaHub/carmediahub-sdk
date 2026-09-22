@@ -9,7 +9,7 @@ const allowedCatalogMethods = new Set(["catalog.register", "catalog.query", "cat
 const allowedDisplayMethods = new Set(["display.capabilities", "display.requestMode"]);
 const allowedNotificationMethods = new Set(["notifications.publish", "notifications.list", "notifications.markRead", "notifications.markAllRead"]);
 const allowedNetworkMethods = new Set(["network.request"]);
-const allowedMediaMethods = new Set(["media.createPlayback", "media.probe", "media.transform", "media.read", "media.list"]);
+const allowedMediaMethods = new Set(["media.createPlayback", "media.probe", "media.transform", "media.read", "media.readOutput", "media.list"]);
 const forbiddenPrefixes = ["policy.", "secret.", "runtime."];
 
 function protocolError(code: string, diagnosticId: string, retryable = false): CmhError {

@@ -136,6 +136,7 @@ export class MemoryRuntime implements PlatformRuntime {
       createPlayback: async (mediaId) => ({ sessionId: `playback_${mediaId}`, mediaId, expiresAt: new Date(Date.now() + 600_000).toISOString() }),
       probe: async (mediaId) => ({ mediaId, contentType: "video/mp4", size: 0, updatedAt: new Date(0).toISOString(), seekable: true, availableModes: ["direct-range" as const], recommendedMode: "direct-range" as const }),
       requestTransform: async (mediaId, request) => this.jobs().enqueue(`media.${request.mode}`, { mediaId, ...request })
+      , readOutput: async () => ({ data: "", completed: true, contentType: "video/mp4", size: 0 })
     };
   }
 

@@ -154,7 +154,8 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     media: () => ({
       createPlayback: async (mediaId: string) => call("media.createPlayback", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PlaybackSession; }),
       probe: async (mediaId: string) => call("media.probe", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaProbe; }),
-      requestTransform: async (mediaId: string, request: MediaTransformRequest) => call("media.transform", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; })
+      requestTransform: async (mediaId: string, request: MediaTransformRequest) => call("media.transform", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
+      readOutput: async (outputId: string, start: number, end: number) => call("media.readOutput", { outputId, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaTransformOutputRead; })
     }),
     network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as NetworkResponse; }) }),
     notifications: () => ({

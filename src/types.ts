@@ -171,11 +171,13 @@ export interface MediaTransformRequest {
   videoCodec?: "copy" | "h264" | "h265";
   audioCodec?: "copy" | "aac" | "opus";
 }
+export interface MediaTransformOutputRead { data: string; completed: boolean; contentType: string; size: number; }
 
 export interface MediaService {
   createPlayback(mediaId: string): Promise<PlaybackSession>;
   probe(mediaId: string): Promise<MediaProbe>;
   requestTransform(mediaId: string, request: MediaTransformRequest): Promise<PluginJob>;
+  readOutput(outputId: string, start: number, end: number): Promise<MediaTransformOutputRead>;
 }
 
 export interface NetworkRequest {
