@@ -1,12 +1,13 @@
 import crypto from "node:crypto";
 import { CmhError, denied } from "./error.js";
-import type { CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { BrowserService, BrowserSession, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
   private readonly jobData = new Map<string, PluginJob>();
   private readonly catalogData = new Map<string, CatalogEntry>();
   private readonly notificationData = new Map<string, Notification>();
+  private readonly browserSessions = new Map<string, BrowserSession>();
 
   constructor(readonly context: PlatformContext, private readonly data = new Map<string, DataRecord>()) {}
 
@@ -144,6 +145,31 @@ export class MemoryRuntime implements PlatformRuntime {
 
   network(): NetworkService {
     return { request: async () => { throw new CmhError({ code: "CMH.CAPABILITY.DENIED", messageKey: "errors.capability.denied", retryable: false, diagnosticId: "diag_network_mock_denied" }); } };
+  }
+
+  browser(): BrowserService {
+    this.require("browser");
+    const prefix = `${this.context.scope.organizationId}:${this.context.scope.userId}:${this.context.scope.installationId}:`;
+    const scoped = (id: string) => `${prefix}${id}`;
+    const active = (session: BrowserSession): BrowserSession => session.status === "active" && Date.parse(session.expiresAt) <= Date.now() ? { ...session, status: "expired" } : session;
+    return {
+      request: async (input) => {
+        if (!/^[a-z][a-z0-9_-]{1,63}$/u.test(input.name) || input.purpose.trim().length === 0 || input.purpose.length > 160) throw new Error("Invalid browser session request");
+        const expiresInSeconds = input.expiresInSeconds ?? 300;
+        if (!Number.isSafeInteger(expiresInSeconds) || expiresInSeconds < 30 || expiresInSeconds > 3600) throw new Error("Invalid browser session expiry");
+        const session: BrowserSession = { id: `browser_${crypto.randomUUID()}`, name: input.name, purpose: input.purpose.trim(), status: "active", expiresAt: new Date(Date.now() + expiresInSeconds * 1000).toISOString() };
+        this.browserSessions.set(scoped(session.id), session);
+        return session;
+      },
+      list: async () => [...this.browserSessions.entries()].filter(([key]) => key.startsWith(prefix)).map(([, session]) => active(session)),
+      revoke: async (id) => {
+        const key = scoped(id);
+        const session = this.browserSessions.get(key);
+        if (session === undefined) return false;
+        this.browserSessions.set(key, { ...active(session), status: "revoked" });
+        return true;
+      }
+    };
   }
 
   notifications(): NotificationService {

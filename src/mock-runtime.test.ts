@@ -81,6 +81,19 @@ test("display capability returns a copy and refuses unsupported fullscreen", asy
   assert.deepEqual(await runtime.display().requestMode("normal"), { mode: "normal", accepted: true });
 });
 
+test("browser sessions are opaque, scoped, bounded, and revocable", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["browser"] });
+  const session = await runtime.browser().request({ name: "youtube", purpose: "authorized media extraction", expiresInSeconds: 60 });
+  assert.match(session.id, /^browser_/u);
+  assert.equal(session.status, "active");
+  assert.equal("profilePath" in session, false);
+  assert.equal((await runtime.browser().list()).length, 1);
+  assert.equal(await runtime.browser().revoke(session.id), true);
+  assert.equal((await runtime.browser().list())[0]?.status, "revoked");
+  await assert.rejects(() => runtime.browser().request({ name: "bad name", purpose: "x" }));
+  await assert.rejects(() => runtime.browser().request({ name: "valid", purpose: "x", expiresInSeconds: 5 }));
+});
+
 test("notifications are scoped and can be marked read", async () => {
   const data = new Map();
   const first = new MemoryRuntime(context, data);

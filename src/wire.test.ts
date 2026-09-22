@@ -63,3 +63,10 @@ test("allows only the public network request method", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "network.request" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "network.openSocket" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });
+
+test("allows only opaque browser session methods", () => {
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.request" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.list" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.revoke" }));
+  assert.throws(() => validateWorkerRequest({ ...request, method: "browser.cdp.connect" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
+});

@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserSessionRequest, CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -38,6 +38,7 @@ export interface WorkerClient {
   display(): DisplayService;
   media(): MediaService;
   network(): NetworkService;
+  browser(): BrowserService;
   notifications(): NotificationService;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
   onContextChanged(handler: (context: WorkerContext) => void): void;
@@ -160,6 +161,11 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       readHlsAsset: async (sessionId: string, asset: string, start: number, end: number) => call("media.readHlsAsset", { sessionId, asset, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaHlsAssetRead; })
     }),
     network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as NetworkResponse; }) }),
+    browser: () => ({
+      request: async (input: BrowserSessionRequest) => call("browser.session.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as BrowserSession; }),
+      list: async () => call("browser.session.list").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { sessions: readonly BrowserSession[] }).sessions; }),
+      revoke: async (id: string) => call("browser.session.revoke", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { revoked: boolean }).revoked; })
+    }),
     notifications: () => ({
       publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as Notification; }),
       list: async (options = {}) => call("notifications.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { notifications: readonly Notification[] }).notifications; }),

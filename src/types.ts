@@ -200,6 +200,29 @@ export interface NetworkResponse {
 
 export interface NetworkService { request(input: NetworkRequest): Promise<NetworkResponse>; }
 
+export type BrowserSessionStatus = "active" | "expired" | "revoked";
+
+export interface BrowserSession {
+  id: string;
+  name: string;
+  purpose: string;
+  status: BrowserSessionStatus;
+  expiresAt: string;
+}
+
+export interface BrowserSessionRequest {
+  name: string;
+  purpose: string;
+  expiresInSeconds?: number;
+}
+
+/** Opaque, scoped browser authorization; never exposes Profile, Cookie, CDP, or host process data. */
+export interface BrowserService {
+  request(input: BrowserSessionRequest): Promise<BrowserSession>;
+  list(): Promise<readonly BrowserSession[]>;
+  revoke(id: string): Promise<boolean>;
+}
+
 export type NotificationSeverity = "info" | "success" | "warning" | "error";
 
 export interface Notification {
@@ -250,6 +273,7 @@ export interface PlatformRuntime {
   display(): DisplayService;
   media(): MediaService;
   network(): NetworkService;
+  browser(): BrowserService;
   notifications(): NotificationService;
   jobs(): PluginJobService;
   publish<T extends Record<string, unknown>>(type: string, payload: T): DomainEvent<T>;
