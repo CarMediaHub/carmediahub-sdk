@@ -15,6 +15,7 @@
     { "code": "CMH.JOBS.RESULT_TOO_LARGE", "retryable": false, "messageKey": "errors.jobs.resultTooLarge" },
     { "code": "CMH.MEDIA.QUOTA_EXCEEDED", "retryable": true, "messageKey": "errors.media.quotaExceeded" },
     { "code": "CMH.NETWORK.TARGET_DENIED", "retryable": false, "messageKey": "errors.network.targetDenied" },
+    { "code": "CMH.PAGINATION.INVALID", "retryable": false, "messageKey": "errors.pagination.invalid" },
     { "code": "CMH.PROTOCOL.BACKPRESSURE_LIMIT", "retryable": true, "messageKey": "errors.protocol.backpressureLimit" },
     { "code": "CMH.PROTOCOL.DEADLINE_EXCEEDED", "retryable": true, "messageKey": "errors.protocol.deadlineExceeded" },
     { "code": "CMH.PROTOCOL.HANDSHAKE_DENIED", "retryable": false, "messageKey": "errors.protocol.handshakeDenied" },
