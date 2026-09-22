@@ -216,11 +216,33 @@ export interface BrowserSessionRequest {
   expiresInSeconds?: number;
 }
 
+export type BrowserTaskStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
+export type BrowserTaskKind = "navigate-and-capture" | "extract-media-reference" | "export-authorized-state";
+
+export interface BrowserTask {
+  id: string;
+  sessionId: string;
+  kind: BrowserTaskKind;
+  status: BrowserTaskStatus;
+  input: { target?: string; label?: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BrowserTaskRequest {
+  sessionId: string;
+  kind: BrowserTaskKind;
+  input?: { target?: string; label?: string };
+}
+
 /** Opaque, scoped browser authorization; never exposes Profile, Cookie, CDP, or host process data. */
 export interface BrowserService {
   request(input: BrowserSessionRequest): Promise<BrowserSession>;
   list(): Promise<readonly BrowserSession[]>;
   revoke(id: string): Promise<boolean>;
+  enqueue(input: BrowserTaskRequest): Promise<BrowserTask>;
+  tasks(): Promise<readonly BrowserTask[]>;
+  cancelTask(id: string): Promise<BrowserTask | undefined>;
 }
 
 export type NotificationSeverity = "info" | "success" | "warning" | "error";

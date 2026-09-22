@@ -68,5 +68,8 @@ test("allows only opaque browser session methods", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.request" }));
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.list" }));
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.revoke" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.task.enqueue" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.task.list" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.task.cancel" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "browser.cdp.connect" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });

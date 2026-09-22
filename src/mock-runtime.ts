@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { CmhError, denied } from "./error.js";
-import type { BrowserService, BrowserSession, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserTask, BrowserTaskKind, BrowserTaskRequest, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   readonly events: DomainEvent[] = [];
@@ -8,6 +8,7 @@ export class MemoryRuntime implements PlatformRuntime {
   private readonly catalogData = new Map<string, CatalogEntry>();
   private readonly notificationData = new Map<string, Notification>();
   private readonly browserSessions = new Map<string, BrowserSession>();
+  private readonly browserTasks = new Map<string, BrowserTask>();
 
   constructor(readonly context: PlatformContext, private readonly data = new Map<string, DataRecord>()) {}
 
@@ -152,6 +153,20 @@ export class MemoryRuntime implements PlatformRuntime {
     const prefix = `${this.context.scope.organizationId}:${this.context.scope.userId}:${this.context.scope.installationId}:`;
     const scoped = (id: string) => `${prefix}${id}`;
     const active = (session: BrowserSession): BrowserSession => session.status === "active" && Date.parse(session.expiresAt) <= Date.now() ? { ...session, status: "expired" } : session;
+    const taskKey = (id: string) => `${prefix}task:${id}`;
+    const activeSession = (id: string): BrowserSession | undefined => {
+      const session = this.browserSessions.get(scoped(id));
+      if (session === undefined) return undefined;
+      const current = active(session);
+      if (current.status !== session.status) this.browserSessions.set(scoped(id), current);
+      return current;
+    };
+    const validInput = (input: BrowserTaskRequest["input"]): { target?: string; label?: string } => {
+      if (input === undefined) return {};
+      const keys = Object.keys(input);
+      if (keys.some((key) => key !== "target" && key !== "label") || (input.target !== undefined && (!/^[a-z][a-z0-9._-]{0,127}$/u.test(input.target))) || (input.label !== undefined && (input.label.trim().length === 0 || input.label.length > 160))) throw new Error("Invalid browser task input");
+      return { ...(input.target === undefined ? {} : { target: input.target }), ...(input.label === undefined ? {} : { label: input.label.trim() }) };
+    };
     return {
       request: async (input) => {
         if (!/^[a-z][a-z0-9_-]{1,63}$/u.test(input.name) || input.purpose.trim().length === 0 || input.purpose.length > 160) throw new Error("Invalid browser session request");
@@ -167,7 +182,28 @@ export class MemoryRuntime implements PlatformRuntime {
         const session = this.browserSessions.get(key);
         if (session === undefined) return false;
         this.browserSessions.set(key, { ...active(session), status: "revoked" });
+        for (const [key, task] of this.browserTasks.entries()) if (key.startsWith(prefix) && task.sessionId === id && (task.status === "queued" || task.status === "running")) this.browserTasks.set(key, { ...task, status: "cancelled", updatedAt: new Date().toISOString() });
         return true;
+      },
+      enqueue: async (input) => {
+        this.require("browser");
+        const session = activeSession(input.sessionId);
+        const kinds: readonly BrowserTaskKind[] = ["navigate-and-capture", "extract-media-reference", "export-authorized-state"];
+        if (session?.status !== "active" || !kinds.includes(input.kind)) throw new Error("Invalid browser task request");
+        const timestamp = new Date().toISOString();
+        const task: BrowserTask = { id: `browser_task_${crypto.randomUUID()}`, sessionId: input.sessionId, kind: input.kind, status: "queued", input: validInput(input.input), createdAt: timestamp, updatedAt: timestamp };
+        this.browserTasks.set(taskKey(task.id), task);
+        return task;
+      },
+      tasks: async () => { this.require("browser"); return [...this.browserTasks.entries()].filter(([key]) => key.startsWith(prefix)).map(([, task]) => task); },
+      cancelTask: async (id) => {
+        this.require("browser");
+        const key = taskKey(id);
+        const task = this.browserTasks.get(key);
+        if (task === undefined || (task.status !== "queued" && task.status !== "running")) return task;
+        const cancelled = { ...task, status: "cancelled" as const, updatedAt: new Date().toISOString() };
+        this.browserTasks.set(key, cancelled);
+        return cancelled;
       }
     };
   }

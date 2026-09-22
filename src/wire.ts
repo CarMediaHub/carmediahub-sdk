@@ -9,7 +9,7 @@ const allowedCatalogMethods = new Set(["catalog.register", "catalog.query", "cat
 const allowedDisplayMethods = new Set(["display.capabilities", "display.requestMode"]);
 const allowedNotificationMethods = new Set(["notifications.publish", "notifications.list", "notifications.markRead", "notifications.markAllRead"]);
 const allowedNetworkMethods = new Set(["network.request"]);
-const allowedBrowserMethods = new Set(["browser.session.request", "browser.session.list", "browser.session.revoke"]);
+const allowedBrowserMethods = new Set(["browser.session.request", "browser.session.list", "browser.session.revoke", "browser.task.enqueue", "browser.task.list", "browser.task.cancel"]);
 const allowedMediaMethods = new Set(["media.createPlayback", "media.probe", "media.transform", "media.hls", "media.read", "media.readOutput", "media.readHlsAsset", "media.list"]);
 const forbiddenPrefixes = ["policy.", "secret.", "runtime."];
 

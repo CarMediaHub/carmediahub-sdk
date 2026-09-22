@@ -90,6 +90,12 @@ test("browser sessions are opaque, scoped, bounded, and revocable", async () => 
   assert.equal((await runtime.browser().list()).length, 1);
   assert.equal(await runtime.browser().revoke(session.id), true);
   assert.equal((await runtime.browser().list())[0]?.status, "revoked");
+  const second = await runtime.browser().request({ name: "fixture", purpose: "task contract" });
+  const task = await runtime.browser().enqueue({ sessionId: second.id, kind: "navigate-and-capture", input: { target: "fixture", label: "Fixture" } });
+  assert.equal(task.status, "queued");
+  assert.equal((await runtime.browser().tasks()).length, 1);
+  assert.equal((await runtime.browser().cancelTask(task.id))?.status, "cancelled");
+  await assert.rejects(() => runtime.browser().enqueue({ sessionId: second.id, kind: "navigate-and-capture", input: { target: "https://example.com" } }));
   await assert.rejects(() => runtime.browser().request({ name: "bad name", purpose: "x" }));
   await assert.rejects(() => runtime.browser().request({ name: "valid", purpose: "x", expiresInSeconds: 5 }));
 });

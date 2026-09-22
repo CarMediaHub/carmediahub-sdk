@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { BrowserService, BrowserSession, BrowserSessionRequest, CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -164,7 +164,10 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     browser: () => ({
       request: async (input: BrowserSessionRequest) => call("browser.session.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as BrowserSession; }),
       list: async () => call("browser.session.list").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { sessions: readonly BrowserSession[] }).sessions; }),
-      revoke: async (id: string) => call("browser.session.revoke", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { revoked: boolean }).revoked; })
+      revoke: async (id: string) => call("browser.session.revoke", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { revoked: boolean }).revoked; }),
+      enqueue: async (input: BrowserTaskRequest) => call("browser.task.enqueue", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as BrowserTask; }),
+      tasks: async () => call("browser.task.list").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { tasks: readonly BrowserTask[] }).tasks; }),
+      cancelTask: async (id: string) => call("browser.task.cancel", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { task?: BrowserTask }).task; })
     }),
     notifications: () => ({
       publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as Notification; }),
