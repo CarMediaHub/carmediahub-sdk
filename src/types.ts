@@ -97,6 +97,7 @@ export interface HistoryQuery {
   category?: string;
   keyword?: string;
   limit?: number;
+  offset?: number;
 }
 
 export interface HistoryService {
@@ -122,6 +123,7 @@ export interface CatalogQuery {
   keyword?: string;
   category?: string;
   limit?: number;
+  offset?: number;
 }
 
 export interface CatalogService {
