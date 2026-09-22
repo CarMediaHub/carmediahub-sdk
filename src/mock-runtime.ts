@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
 import { CmhError, denied } from "./error.js";
-import type { BrowserService, BrowserSession, BrowserTask, BrowserTaskKind, BrowserTaskRequest, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserTask, BrowserTaskKind, BrowserTaskRequest, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataMigration, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
+  private readonly migrationData = new Map<number, PluginDataMigration>();
   readonly events: DomainEvent[] = [];
   private readonly jobData = new Map<string, PluginJob>();
   private readonly catalogData = new Map<string, CatalogEntry>();
@@ -42,7 +43,19 @@ export class MemoryRuntime implements PlatformRuntime {
         const maximum = Math.min(Math.max(options.limit ?? 100, 1), 1000);
         const match = `${prefix}${collection}:${options.prefix ?? ""}`;
         return [...this.data.entries()].filter(([address]) => address.startsWith(match)).slice(0, maximum).map(([, record]) => record as DataRecord<T>);
-      }
+      },
+      migrate: async (input) => {
+        if (!Number.isSafeInteger(input.version) || input.version < 1 || !/^[a-z][a-z0-9_.-]{0,127}$/u.test(input.name)) throw new Error("Invalid plugin data migration");
+        const existing = this.migrationData.get(input.version);
+        if (existing !== undefined) {
+          if (existing.name !== input.name) throw new Error("Plugin data migration version conflict");
+          return existing;
+        }
+        const migration = { version: input.version, name: input.name, appliedAt: new Date().toISOString() };
+        this.migrationData.set(input.version, migration);
+        return migration;
+      },
+      migrations: async () => [...this.migrationData.values()].sort((left, right) => left.version - right.version)
     };
   }
 

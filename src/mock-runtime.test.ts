@@ -34,6 +34,15 @@ test("isolates logical plugin data by user and installation", async () => {
   assert.equal(await otherInstallation.database().get("history", "item-one"), undefined);
 });
 
+test("records idempotent logical data migrations", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["db"] });
+  const first = await runtime.database().migrate({ version: 1, name: "initial-settings" });
+  const again = await runtime.database().migrate({ version: 1, name: "initial-settings" });
+  assert.equal(again.appliedAt, first.appliedAt);
+  assert.deepEqual(await runtime.database().migrations(), [first]);
+  await assert.rejects(() => runtime.database().migrate({ version: 1, name: "different" }));
+});
+
 test("rejects ungranted capability", () => {
   const runtime = new MemoryRuntime(context);
   assert.throws(() => runtime.require("network"), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");

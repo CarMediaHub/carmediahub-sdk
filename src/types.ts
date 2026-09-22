@@ -67,6 +67,12 @@ export interface DataRecord<T = unknown> {
   updatedAt: string;
 }
 
+export interface PluginDataMigration {
+  version: number;
+  name: string;
+  appliedAt: string;
+}
+
 /**
  * A constrained logical data namespace. Implementations must bind every call
  * to the calling organization, user, and plugin installation; plugins never
@@ -77,6 +83,8 @@ export interface PluginDataStore {
   put<T>(collection: string, key: string, value: T): Promise<DataRecord<T>>;
   delete(collection: string, key: string): Promise<boolean>;
   list<T>(collection: string, options?: { prefix?: string; limit?: number }): Promise<readonly DataRecord<T>[]>;
+  migrate(input: { version: number; name: string }): Promise<PluginDataMigration>;
+  migrations(): Promise<readonly PluginDataMigration[]>;
 }
 
 export interface HistoryEntry {

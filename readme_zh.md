@@ -13,6 +13,7 @@ CarMediaHub SDK 定义插件清单、生命周期契约、平台上下文、能�
 - `normalizeLocale`、`localeFallbacks` 和 `localize`：统一语言别名及“请求语言 -> 语言族 -> 英文”的插件文案回退。
 - Capability API：数据、媒体、历史、目录、显示、任务、通知、网络和事件能力均按安装实例授权。
 - `WorkerClient.database()`：通过 Broker 提供逻辑 `get`/`put`/`delete`/`list` 操作；Core 为每次调用绑定组织、用户和插件安装实例作用域。
+- 同一数据 API 提供按版本和逻辑名称记录的幂等迁移台账（`migrate`/`migrations`）；不接受 SQL 或迁移代码。
 - `WorkerClient` 与 Wire Protocol：插件通过 Broker 使用逻辑路由和受控请求，不监听公网端口，不接触数据库连接、宿主路径或会话 Cookie。
 - Memory Runtime：用于插件契约测试，不代表生产环境的存储或媒体执行器。
 

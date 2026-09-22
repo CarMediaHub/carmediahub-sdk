@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataMigration, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -143,7 +143,9 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       get: async <T>(collection: string, key: string) => call("data.get", { collection, key }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { record?: DataRecord<T> }).record; }),
       put: async <T>(collection: string, key: string, value: T) => call("data.put", { collection, key, value }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { record: DataRecord<T> }).record; }),
       delete: async (collection: string, key: string) => call("data.delete", { collection, key }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { deleted: boolean }).deleted; }),
-      list: async <T>(collection: string, options: { prefix?: string; limit?: number } = {}) => call("data.list", { collection, ...options }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { records: readonly DataRecord<T>[] }).records; })
+      list: async <T>(collection: string, options: { prefix?: string; limit?: number } = {}) => call("data.list", { collection, ...options }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { records: readonly DataRecord<T>[] }).records; }),
+      migrate: async (input: { version: number; name: string }) => call("data.migrate", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { migration: PluginDataMigration }).migration; }),
+      migrations: async () => call("data.migrations").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { migrations: readonly PluginDataMigration[] }).migrations; })
     }),
     history: () => ({
       record: async (input) => call("history.record", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as HistoryEntry; }),
