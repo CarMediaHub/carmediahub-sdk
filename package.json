@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "sbom": "node scripts/generate-sbom.mjs",
     "check": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test src/**/*.test.ts",
     "test:coverage": "tsx --test --experimental-test-coverage src/**/*.test.ts"
