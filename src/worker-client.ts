@@ -33,7 +33,8 @@ export interface WorkerClient {
   close(): void;
   call<T>(method: string, params?: unknown): Promise<T>;
   jobs(): { enqueue(type: string, payload: unknown): Promise<PluginJob>; list(options?: { limit?: number }): Promise<readonly PluginJob[]>; cancel(id: string): Promise<PluginJob | undefined> };
-  database(): PluginDataStore;
+  /** Present on Core v0.1+ clients; optional to keep older Worker test doubles source-compatible. */
+  database?: () => PluginDataStore;
   history(): HistoryService;
   catalog(): CatalogService;
   display(): DisplayService;
