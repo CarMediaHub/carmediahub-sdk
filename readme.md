@@ -6,6 +6,22 @@ Language: English · [简体中文](readme_zh.md) · [한국어](readme_ko.md)
 
 Plugins use these public contracts without importing Core internals.
 
+## Included capabilities
+
+- `PlatformContext`: user, organization, plugin installation, device, locale, time zone, theme, density, entry source, and display context.
+- `onContextChanged`: plugins can update their UI when Core preferences change without implementing a second language or display settings system.
+- Capability APIs for scoped data, media, history, catalog, display, jobs, notifications, network, and events.
+- `WorkerClient` and the Wire Protocol: plugins use logical routes through the Broker without public listeners or access to database connections, host paths, or session cookies.
+- `Memory Runtime` for contract tests. It is not a production storage or media executor.
+
+## Runtime boundary
+
+A Manifest requests capabilities; it is not a general system-call interface. Plugins cannot submit shell commands, host paths, arbitrary environment variables, database DSNs, or undeclared capabilities. Core owns authentication, scope, authorization, resource limits, and error redaction; plugins use only SDK-defined logical APIs.
+
+## Version and locales
+
+The v0 contract supports `en`, `zh-CN`, and `ko`. Plugins inherit the locale, time zone, and display context supplied by Core. A plugin may provide business translations, but must not create a second platform-wide preference system. Protocol and error specifications are in [`spec/v0`](spec/v0/readme.md).
+
 ## Development
 
 ```powershell
