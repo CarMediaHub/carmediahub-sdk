@@ -160,7 +160,8 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     notifications: () => ({
       publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as Notification; }),
       list: async (options = {}) => call("notifications.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { notifications: readonly Notification[] }).notifications; }),
-      markRead: async (id) => call("notifications.markRead", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { marked: boolean }).marked; })
+      markRead: async (id) => call("notifications.markRead", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { marked: boolean }).marked; }),
+      markAllRead: async () => call("notifications.markAllRead").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { marked: number }).marked; })
     }),
     onGatewayRequest: (handler) => { gatewayHandler = handler; },
     onContextChanged: (handler) => { contextChangedHandler = handler; }

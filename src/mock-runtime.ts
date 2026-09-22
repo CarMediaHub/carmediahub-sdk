@@ -150,7 +150,8 @@ export class MemoryRuntime implements PlatformRuntime {
         return notification;
       },
       list: async (options = {}) => [...this.notificationData.entries()].filter(([key, value]) => key.startsWith(prefix) && (!options.unreadOnly || value.readAt === undefined)).map(([, value]) => value).slice(0, Math.min(Math.max(options.limit ?? 100, 1), 500)),
-      markRead: async (id) => { const key = prefix + id; const notification = this.notificationData.get(key); if (notification === undefined) return false; this.notificationData.set(key, { ...notification, readAt: new Date().toISOString() }); return true; }
+      markRead: async (id) => { const key = prefix + id; const notification = this.notificationData.get(key); if (notification === undefined) return false; this.notificationData.set(key, { ...notification, readAt: new Date().toISOString() }); return true; },
+      markAllRead: async () => { let marked = 0; for (const [key, notification] of this.notificationData.entries()) { if (key.startsWith(prefix) && notification.readAt === undefined) { this.notificationData.set(key, { ...notification, readAt: new Date().toISOString() }); marked += 1; } } return marked; }
     };
   }
 

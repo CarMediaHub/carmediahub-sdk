@@ -208,6 +208,7 @@ export interface NotificationService {
   publish(input: { severity: NotificationSeverity; title: string; body?: string }): Promise<Notification>;
   list(options?: { limit?: number; unreadOnly?: boolean }): Promise<readonly Notification[]>;
   markRead(id: string): Promise<boolean>;
+  markAllRead(): Promise<number>;
 }
 
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";

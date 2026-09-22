@@ -49,6 +49,7 @@ test("allows only the public display method namespace", () => {
 
 test("allows only the public notification method namespace", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "notifications.publish" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "notifications.markAllRead" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "notifications.deleteAll" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });
 

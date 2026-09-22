@@ -90,4 +90,7 @@ test("notifications are scoped and can be marked read", async () => {
   assert.deepEqual(await other.notifications().list(), []);
   assert.equal(await first.notifications().markRead(notification.id), true);
   assert.equal((await first.notifications().list({ unreadOnly: true })).length, 0);
+  await first.notifications().publish({ severity: "info", title: "Second" });
+  assert.equal(await first.notifications().markAllRead(), 1);
+  assert.equal((await first.notifications().list({ unreadOnly: true })).length, 0);
 });
