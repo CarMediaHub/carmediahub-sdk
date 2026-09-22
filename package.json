@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Public plugin contracts for CarMediaHub.",
   "license": "Apache-2.0",
+  "packageManager": "pnpm@11.19.0",
   "type": "module",
   "exports": {
     ".": {
