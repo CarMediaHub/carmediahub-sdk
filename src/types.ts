@@ -172,12 +172,16 @@ export interface MediaTransformRequest {
   audioCodec?: "copy" | "aac" | "opus";
 }
 export interface MediaTransformOutputRead { data: string; completed: boolean; contentType: string; size: number; }
+export interface MediaHlsRequest { segmentDurationSeconds?: 2 | 4 | 6; }
+export interface MediaHlsAssetRead { data: string; completed: boolean; contentType: string; size: number; }
 
 export interface MediaService {
   createPlayback(mediaId: string): Promise<PlaybackSession>;
   probe(mediaId: string): Promise<MediaProbe>;
   requestTransform(mediaId: string, request: MediaTransformRequest): Promise<PluginJob>;
   readOutput(outputId: string, start: number, end: number): Promise<MediaTransformOutputRead>;
+  requestHls(mediaId: string, request?: MediaHlsRequest): Promise<PluginJob>;
+  readHlsAsset(sessionId: string, asset: string, start: number, end: number): Promise<MediaHlsAssetRead>;
 }
 
 export interface NetworkRequest {

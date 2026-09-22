@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { CatalogEntry, CatalogQuery, CatalogService, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -155,7 +155,9 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       createPlayback: async (mediaId: string) => call("media.createPlayback", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PlaybackSession; }),
       probe: async (mediaId: string) => call("media.probe", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaProbe; }),
       requestTransform: async (mediaId: string, request: MediaTransformRequest) => call("media.transform", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
-      readOutput: async (outputId: string, start: number, end: number) => call("media.readOutput", { outputId, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaTransformOutputRead; })
+      readOutput: async (outputId: string, start: number, end: number) => call("media.readOutput", { outputId, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaTransformOutputRead; }),
+      requestHls: async (mediaId: string, request: MediaHlsRequest = {}) => call("media.hls", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
+      readHlsAsset: async (sessionId: string, asset: string, start: number, end: number) => call("media.readHlsAsset", { sessionId, asset, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaHlsAssetRead; })
     }),
     network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as NetworkResponse; }) }),
     notifications: () => ({

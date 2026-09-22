@@ -137,6 +137,8 @@ export class MemoryRuntime implements PlatformRuntime {
       probe: async (mediaId) => ({ mediaId, contentType: "video/mp4", size: 0, updatedAt: new Date(0).toISOString(), seekable: true, availableModes: ["direct-range" as const], recommendedMode: "direct-range" as const }),
       requestTransform: async (mediaId, request) => this.jobs().enqueue(`media.${request.mode}`, { mediaId, ...request })
       , readOutput: async () => ({ data: "", completed: true, contentType: "video/mp4", size: 0 })
+      , requestHls: async (mediaId, request = {}) => this.jobs().enqueue("media.hls", { mediaId, ...request })
+      , readHlsAsset: async () => ({ data: "", completed: true, contentType: "application/vnd.apple.mpegurl", size: 0 })
     };
   }
 
