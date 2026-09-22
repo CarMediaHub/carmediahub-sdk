@@ -13,6 +13,8 @@
     { "code": "CMH.JOBS.QUEUE_FULL", "retryable": true, "messageKey": "errors.jobs.queueFull" },
     { "code": "CMH.JOBS.PAYLOAD_TOO_LARGE", "retryable": false, "messageKey": "errors.jobs.payloadTooLarge" },
     { "code": "CMH.JOBS.RESULT_TOO_LARGE", "retryable": false, "messageKey": "errors.jobs.resultTooLarge" },
+    { "code": "CMH.JOBS.INTERRUPTED", "retryable": true, "messageKey": "errors.jobs.interrupted" },
+    { "code": "CMH.JOBS.EXECUTION_FAILED", "retryable": false, "messageKey": "errors.jobs.executionFailed" },
     { "code": "CMH.MEDIA.QUOTA_EXCEEDED", "retryable": true, "messageKey": "errors.media.quotaExceeded" },
     { "code": "CMH.NETWORK.TARGET_DENIED", "retryable": false, "messageKey": "errors.network.targetDenied" },
     { "code": "CMH.PAGINATION.INVALID", "retryable": false, "messageKey": "errors.pagination.invalid" },

@@ -47,3 +47,18 @@ test("job size errors are part of the public v0 contract", async () => {
     messageKey: "errors.jobs.resultTooLarge"
   });
 });
+
+test("job lifecycle errors are part of the public v0 contract", async () => {
+  const catalog = await loadCatalog();
+  const entries = new Map(catalog.errors.map((entry) => [entry.code, entry]));
+  assert.deepEqual(entries.get("CMH.JOBS.INTERRUPTED"), {
+    code: "CMH.JOBS.INTERRUPTED",
+    retryable: true,
+    messageKey: "errors.jobs.interrupted"
+  });
+  assert.deepEqual(entries.get("CMH.JOBS.EXECUTION_FAILED"), {
+    code: "CMH.JOBS.EXECUTION_FAILED",
+    retryable: false,
+    messageKey: "errors.jobs.executionFailed"
+  });
+});
