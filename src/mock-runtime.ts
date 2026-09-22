@@ -84,9 +84,11 @@ export class MemoryRuntime implements PlatformRuntime {
         return entry;
       },
       query: async (options: HistoryQuery = {}) => {
-        const records = await store.list<HistoryEntry>("history", { limit: Math.min(Math.max(options.limit ?? 100, 1), 500) });
+        const records = await store.list<HistoryEntry>("history", { limit: 500 });
         const keyword = options.keyword?.trim().toLocaleLowerCase();
-        return records.map((record) => record.value).filter((entry) => (options.pluginId === undefined || entry.pluginId === options.pluginId) && (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.route}`.toLocaleLowerCase().includes(keyword))).sort((left, right) => right.visitedAt.localeCompare(left.visitedAt));
+        const offset = Math.max(options.offset ?? 0, 0);
+        const limit = Math.min(Math.max(options.limit ?? 100, 1), 500);
+        return records.map((record) => record.value).filter((entry) => (options.pluginId === undefined || entry.pluginId === options.pluginId) && (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.route}`.toLocaleLowerCase().includes(keyword))).sort((left, right) => right.visitedAt.localeCompare(left.visitedAt)).slice(offset, offset + limit);
       },
       clear: async (options = {}) => {
         const entries = await store.list<HistoryEntry>("history", { limit: 500 });
@@ -109,7 +111,9 @@ export class MemoryRuntime implements PlatformRuntime {
       },
       query: async (options: CatalogQuery = {}) => {
         const keyword = options.keyword?.trim().toLocaleLowerCase();
-        return [...this.catalogData.entries()].filter(([key]) => key.startsWith(prefix)).map(([, entry]) => entry).filter((entry) => (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.description ?? ""}`.toLocaleLowerCase().includes(keyword))).slice(0, Math.min(Math.max(options.limit ?? 100, 1), 500));
+        const offset = Math.max(options.offset ?? 0, 0);
+        const limit = Math.min(Math.max(options.limit ?? 100, 1), 500);
+        return [...this.catalogData.entries()].filter(([key]) => key.startsWith(prefix)).map(([, entry]) => entry).filter((entry) => (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.description ?? ""}`.toLocaleLowerCase().includes(keyword))).slice(offset, offset + limit);
       },
       remove: async (id) => this.catalogData.delete(prefix + id)
     };
