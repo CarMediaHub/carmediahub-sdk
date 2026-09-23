@@ -18,6 +18,7 @@ const manifest: PluginManifest = {
 
 test("validates a complete public manifest", () => {
   assert.doesNotThrow(() => validateManifest(manifest));
+  assert.doesNotThrow(() => validateManifest({ ...manifest, capabilities: ["network", "secrets"] }));
 });
 
 test("validates optional global service binding declarations", () => {
