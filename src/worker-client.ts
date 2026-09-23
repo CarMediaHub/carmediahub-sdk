@@ -39,7 +39,8 @@ export interface WorkerClient {
   catalog(): CatalogService;
   display(): DisplayService;
   media(): MediaService;
-  mediaSources(): MediaSourceService;
+  /** Present on Core v0.1+ clients that grant `media-source`; optional for older test doubles. */
+  mediaSources?: () => MediaSourceService;
   network(): NetworkService;
   browser(): BrowserService;
   notifications(): NotificationService;
