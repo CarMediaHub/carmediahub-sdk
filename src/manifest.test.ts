@@ -21,7 +21,7 @@ test("validates a complete public manifest", () => {
 });
 
 test("validates optional global service binding declarations", () => {
-  assert.doesNotThrow(() => validateManifest({ ...manifest, serviceBindings: ["alist-web", "mihomo-web"] }));
+  assert.doesNotThrow(() => validateManifest({ ...manifest, capabilities: ["network"], serviceBindings: ["alist-web", "mihomo-web"] }));
   assert.throws(() => validateManifest({ ...manifest, serviceBindings: ["../secret"] }), ManifestValidationError);
   assert.throws(() => validateManifest({ ...manifest, serviceBindings: ["alist-web", "alist-web"] }), ManifestValidationError);
   assert.throws(() => validateManifest({ ...manifest, capabilities: ["gateway"], serviceBindings: ["alist-web"] }), ManifestValidationError);
