@@ -24,6 +24,7 @@ test("validates optional global service binding declarations", () => {
   assert.doesNotThrow(() => validateManifest({ ...manifest, serviceBindings: ["alist-web", "mihomo-web"] }));
   assert.throws(() => validateManifest({ ...manifest, serviceBindings: ["../secret"] }), ManifestValidationError);
   assert.throws(() => validateManifest({ ...manifest, serviceBindings: ["alist-web", "alist-web"] }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, capabilities: ["gateway"], serviceBindings: ["alist-web"] }), ManifestValidationError);
 });
 
 test("rejects missing translations and unknown capabilities", () => {
