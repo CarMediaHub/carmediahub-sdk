@@ -198,6 +198,8 @@ export interface NetworkRequest {
   path: string;
   headers?: Record<string, string>;
   body?: string;
+  /** Opaque Core-owned credential reference. The secret value never crosses the plugin boundary. */
+  credentialRef?: string;
 }
 
 export interface NetworkResponse {
