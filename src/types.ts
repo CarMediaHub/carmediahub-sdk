@@ -303,12 +303,21 @@ export interface BrowserSessionRequest {
 export type BrowserTaskStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 export type BrowserTaskKind = "navigate-and-capture" | "extract-media-reference" | "export-authorized-state";
 
+/** Core-owned, bounded task output. It never contains cookies, profiles, host paths or raw upstream URLs. */
+export interface BrowserTaskResult {
+  kind: BrowserTaskKind;
+  reference?: string;
+  fields?: Readonly<Record<string, string | number | boolean>>;
+  expiresAt: string;
+}
+
 export interface BrowserTask {
   id: string;
   sessionId: string;
   kind: BrowserTaskKind;
   status: BrowserTaskStatus;
   input: { target?: string; label?: string };
+  result?: BrowserTaskResult;
   createdAt: string;
   updatedAt: string;
 }
