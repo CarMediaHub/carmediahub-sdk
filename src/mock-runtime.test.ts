@@ -43,6 +43,15 @@ test("records idempotent logical data migrations", async () => {
   await assert.rejects(() => runtime.database().migrate({ version: 1, name: "different" }));
 });
 
+test("keeps mock data validation and ordering aligned with Core adapters", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["db"] });
+  await runtime.database().put("settings", "z-last", { value: 1 });
+  await runtime.database().put("settings", "a-first", { value: 2 });
+  assert.deepEqual((await runtime.database().list("settings")).map((record) => record.key), ["a-first", "z-last"]);
+  await assert.rejects(() => runtime.database().put("settings", "missing", undefined), /JSON serializable/);
+  await assert.rejects(() => runtime.database().list("settings", { prefix: "bad/prefix" }), /lowercase identifier/);
+});
+
 test("rejects ungranted capability", () => {
   const runtime = new MemoryRuntime(context);
   assert.throws(() => runtime.require("network"), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");

@@ -33,6 +33,8 @@ export class MemoryRuntime implements PlatformRuntime {
     return {
       get: async <T>(collection: string, key: string) => this.data.get(address(collection, key)) as DataRecord<T> | undefined,
       put: async <T>(collection: string, key: string, value: T) => {
+        validate(key, "key");
+        if (JSON.stringify(value) === undefined) throw new Error("Plugin data value must be JSON serializable");
         const record: DataRecord<T> = { key, value, updatedAt: new Date().toISOString() };
         this.data.set(address(collection, key), record);
         return record;
@@ -41,8 +43,10 @@ export class MemoryRuntime implements PlatformRuntime {
       list: async <T>(collection: string, options: { prefix?: string; limit?: number } = {}) => {
         validate(collection, "collection");
         const maximum = Math.min(Math.max(options.limit ?? 100, 1), 1000);
-        const match = `${prefix}${collection}:${options.prefix ?? ""}`;
-        return [...this.data.entries()].filter(([address]) => address.startsWith(match)).slice(0, maximum).map(([, record]) => record as DataRecord<T>);
+        const recordPrefix = options.prefix ?? "";
+        if (recordPrefix.length > 0) validate(recordPrefix, "prefix");
+        const match = `${prefix}${collection}:${recordPrefix}`;
+        return [...this.data.entries()].filter(([address]) => address.startsWith(match)).sort((left, right) => left[1].key.localeCompare(right[1].key)).slice(0, maximum).map(([, record]) => record as DataRecord<T>);
       },
       migrate: async (input) => {
         if (!Number.isSafeInteger(input.version) || input.version < 1 || !/^[a-z][a-z0-9_.-]{0,127}$/u.test(input.name)) throw new Error("Invalid plugin data migration");
