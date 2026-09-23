@@ -5,7 +5,7 @@ const routePath = /^\/[a-zA-Z0-9/_-]*$/;
 const workerEntry = /^\.\/[a-zA-Z0-9_./-]+$/;
 const semver = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const knownCapabilities = new Set<CapabilityName>([
-  "config", "secrets", "db", "storage", "media", "history", "catalog", "display", "jobs", "events",
+  "config", "secrets", "db", "storage", "media", "media-source", "history", "catalog", "display", "jobs", "events",
   "diagnostics", "gateway", "network", "browser", "transfer"
 ]);
 const knownRuntimes = new Set<RuntimeGroup>(["shared-adapter-host", "isolated-worker", "wasm-module"]);

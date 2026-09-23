@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataMigration, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaSourceListRequest, MediaSourceListResult, MediaSourceProbe, MediaSourceReadRequest, MediaSourceReadResult, MediaSourceService, MediaSourceStat, MediaSourcePlaybackSession, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataMigration, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -39,6 +39,7 @@ export interface WorkerClient {
   catalog(): CatalogService;
   display(): DisplayService;
   media(): MediaService;
+  mediaSources(): MediaSourceService;
   network(): NetworkService;
   browser(): BrowserService;
   notifications(): NotificationService;
@@ -169,6 +170,13 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       readOutput: async (outputId: string, start: number, end: number) => call("media.readOutput", { outputId, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaTransformOutputRead; }),
       requestHls: async (mediaId: string, request: MediaHlsRequest = {}) => call("media.hls", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
       readHlsAsset: async (sessionId: string, asset: string, start: number, end: number) => call("media.readHlsAsset", { sessionId, asset, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaHlsAssetRead; })
+    }),
+    mediaSources: () => ({
+      list: async (input: MediaSourceListRequest) => call("mediaSource.list", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceListResult; }),
+      stat: async (sourceHandle: string, itemHandle: string) => call("mediaSource.stat", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceStat; }),
+      probe: async (sourceHandle: string, itemHandle: string) => call("mediaSource.probe", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceProbe; }),
+      createPlayback: async (sourceHandle: string, itemHandle: string) => call("mediaSource.createPlayback", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourcePlaybackSession; }),
+      read: async (input: MediaSourceReadRequest) => call("mediaSource.read", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceReadResult; })
     }),
     network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as NetworkResponse; }) }),
     browser: () => ({

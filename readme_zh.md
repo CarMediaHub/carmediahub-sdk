@@ -11,7 +11,8 @@ CarMediaHub SDK 定义插件清单、生命周期契约、平台上下文、能�
 - `PlatformContext`：用户、组织、插件实例、设备、语言、时区、主题、密度、入口来源和显示能力。
 - `onContextChanged`：Core 更新统一偏好时，插件可以热更新界面，不需要重复实现语言或显示设置。
 - `normalizeLocale`、`localeFallbacks` 和 `localize`：统一语言别名及“请求语言 -> 语言族 -> 英文”的插件文案回退。
-- Capability API：数据、媒体、历史、目录、显示、任务、通知、网络和事件能力均按安装实例授权。
+- Capability API：数据、媒体、只读媒体源、历史、目录、显示、任务、通知、网络和事件能力均按安装实例授权。
+- `mediaSources()`：通过 Core 管理的不透明 source/item handle 提供受限的目录、元数据、探测、播放会话和 Range 读取；插件不会获得 WebDAV URL、端点、宿主路径、凭据，也没有写入/删除能力。
 - `WorkerClient.database()`（Core v0.1+ 提供）：通过 Broker 提供逻辑 `get`/`put`/`delete`/`list` 操作；Core 为每次调用绑定组织、用户和插件安装实例作用域。
 - 同一数据 API 提供按版本和逻辑名称记录的幂等迁移台账（`migrate`/`migrations`）；不接受 SQL 或迁移代码。
 - `WorkerClient` 与 Wire Protocol：插件通过 Broker 使用逻辑路由和受控请求，不监听公网端口，不接触数据库连接、宿主路径或会话 Cookie。

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { CmhError, denied } from "./error.js";
-import type { BrowserService, BrowserSession, BrowserTask, BrowserTaskKind, BrowserTaskRequest, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataMigration, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserTask, BrowserTaskKind, BrowserTaskRequest, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, DomainEvent, HistoryEntry, HistoryQuery, HistoryService, MediaService, MediaSourceService, NetworkService, Notification, NotificationService, PlatformContext, PlatformRuntime, PluginDataMigration, PluginDataStore, PluginJob, PluginJobService } from "./types.js";
 
 export class MemoryRuntime implements PlatformRuntime {
   private readonly migrationData = new Map<number, PluginDataMigration>();
@@ -154,6 +154,36 @@ export class MemoryRuntime implements PlatformRuntime {
       , readOutput: async () => ({ data: "", completed: true, contentType: "video/mp4", size: 0 })
       , requestHls: async (mediaId, request = {}) => this.jobs().enqueue("media.hls", { mediaId, ...request })
       , readHlsAsset: async () => ({ data: "", completed: true, contentType: "application/vnd.apple.mpegurl", size: 0 })
+    };
+  }
+
+  mediaSources(): MediaSourceService {
+    this.require("media-source");
+    const sourceHandle = "source_demo";
+    const itemHandle = "item_demo_video";
+    const item = { itemHandle, name: "demo.mp4", kind: "file" as const, size: 0, contentType: "video/mp4", updatedAt: new Date(0).toISOString() };
+    const validHandle = (value: string, prefix: string) => value.startsWith(`${prefix}_`) && value.length <= 160;
+    return {
+      list: async (input) => {
+        if (input.sourceHandle !== sourceHandle || (input.parentHandle !== undefined && input.parentHandle !== "root")) throw new Error("Unknown media source handle");
+        return { items: [item].slice(0, Math.min(Math.max(input.limit ?? 100, 1), 500)) };
+      },
+      stat: async (source, itemId) => {
+        if (source !== sourceHandle || itemId !== itemHandle) throw new Error("Unknown media source item handle");
+        return { sourceHandle: source, itemHandle: itemId, item };
+      },
+      probe: async (source, itemId) => {
+        if (source !== sourceHandle || itemId !== itemHandle) throw new Error("Unknown media source item handle");
+        return { sourceHandle: source, itemHandle: itemId, contentType: "video/mp4", size: 0, seekable: true, availableModes: ["direct-range" as const], recommendedMode: "direct-range" as const };
+      },
+      createPlayback: async (source, itemId) => {
+        if (source !== sourceHandle || itemId !== itemHandle) throw new Error("Unknown media source item handle");
+        return { sessionId: `source_playback_${crypto.randomUUID()}`, sourceHandle: source, itemHandle: itemId, expiresAt: new Date(Date.now() + 600_000).toISOString() };
+      },
+      read: async (input) => {
+        if (!validHandle(input.sessionId, "source_playback") || !Number.isSafeInteger(input.start) || !Number.isSafeInteger(input.end) || input.start < 0 || input.end < input.start) throw new Error("Invalid media source read request");
+        return { data: "", contentType: "video/mp4", size: 0, completed: true };
+      }
     };
   }
 

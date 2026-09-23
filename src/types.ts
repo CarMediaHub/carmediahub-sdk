@@ -8,6 +8,7 @@ export type CapabilityName =
   | "db"
   | "storage"
   | "media"
+  | "media-source"
   | "history"
   | "catalog"
   | "display"
@@ -192,6 +193,79 @@ export interface MediaService {
   readHlsAsset(sessionId: string, asset: string, start: number, end: number): Promise<MediaHlsAssetRead>;
 }
 
+/** Opaque, Core-owned reference to a configured read-only media source. */
+export interface MediaSourceHandle {
+  sourceHandle: string;
+}
+
+export type MediaSourceItemKind = "directory" | "file";
+
+export interface MediaSourceItem {
+  itemHandle: string;
+  name: string;
+  kind: MediaSourceItemKind;
+  size?: number;
+  contentType?: string;
+  updatedAt?: string;
+}
+
+export interface MediaSourceListRequest {
+  sourceHandle: string;
+  parentHandle?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface MediaSourceListResult {
+  items: readonly MediaSourceItem[];
+  nextCursor?: string;
+}
+
+export interface MediaSourceStat {
+  sourceHandle: string;
+  itemHandle: string;
+  item: MediaSourceItem;
+}
+
+export interface MediaSourceProbe {
+  sourceHandle: string;
+  itemHandle: string;
+  contentType: string;
+  size: number;
+  seekable: boolean;
+  availableModes: readonly MediaPlaybackMode[];
+  recommendedMode: MediaPlaybackMode;
+}
+
+export interface MediaSourcePlaybackSession {
+  sessionId: string;
+  sourceHandle: string;
+  itemHandle: string;
+  expiresAt: string;
+}
+
+export interface MediaSourceReadRequest {
+  sessionId: string;
+  start: number;
+  end: number;
+}
+
+export interface MediaSourceReadResult {
+  data: string;
+  contentType: string;
+  size: number;
+  completed: boolean;
+}
+
+/** Read-only media-source API. Implementations resolve credentials inside Core. */
+export interface MediaSourceService {
+  list(input: MediaSourceListRequest): Promise<MediaSourceListResult>;
+  stat(sourceHandle: string, itemHandle: string): Promise<MediaSourceStat>;
+  probe(sourceHandle: string, itemHandle: string): Promise<MediaSourceProbe>;
+  createPlayback(sourceHandle: string, itemHandle: string): Promise<MediaSourcePlaybackSession>;
+  read(input: MediaSourceReadRequest): Promise<MediaSourceReadResult>;
+}
+
 export interface NetworkRequest {
   binding: string;
   method: "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -304,6 +378,7 @@ export interface PlatformRuntime {
   catalog(): CatalogService;
   display(): DisplayService;
   media(): MediaService;
+  mediaSources(): MediaSourceService;
   network(): NetworkService;
   browser(): BrowserService;
   notifications(): NotificationService;

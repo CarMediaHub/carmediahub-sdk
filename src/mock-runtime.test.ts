@@ -64,6 +64,19 @@ test("media transform requests become scoped jobs", async () => {
   assert.deepEqual(job.payload, { mediaId: "media-1", mode: "transcode", container: "mp4", videoCodec: "h264", audioCodec: "aac" });
 });
 
+test("media source API uses opaque handles and read-only operations", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["media-source"] });
+  const source = runtime.mediaSources();
+  const listing = await source.list({ sourceHandle: "source_demo" });
+  assert.equal(listing.items[0]?.name, "demo.mp4");
+  assert.equal("path" in (listing.items[0] ?? {}), false);
+  const playback = await source.createPlayback("source_demo", listing.items[0]!.itemHandle);
+  assert.match(playback.sessionId, /^source_playback_/u);
+  await assert.rejects(() => source.list({ sourceHandle: "https://internal.example/webdav" }));
+  await assert.rejects(() => source.stat("source_demo", "../secret"));
+  await assert.rejects(() => source.read({ sessionId: playback.sessionId, start: 4, end: 2 }));
+});
+
 test("history is scoped, searchable, and clearable through the platform API", async () => {
   const sharedData = new Map<string, DataRecord>();
   const first = new MemoryRuntime({ ...context, grantedCapabilities: ["db", "history"], scope: { ...context.scope, userId: "user-a", installationId: "plugin-one" } }, sharedData);

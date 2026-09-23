@@ -64,6 +64,12 @@ test("allows only the public network request method", () => {
   assert.throws(() => validateWorkerRequest({ ...request, method: "network.openSocket" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });
 
+test("allows only the bounded media source methods", () => {
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "mediaSource.list" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "mediaSource.read" }));
+  assert.throws(() => validateWorkerRequest({ ...request, method: "mediaSource.write" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
+});
+
 test("allows only opaque browser session methods", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.request" }));
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "browser.session.list" }));
