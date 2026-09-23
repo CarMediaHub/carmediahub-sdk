@@ -11,7 +11,8 @@ Plugins use these public contracts without importing Core internals.
 - `PlatformContext`: user, organization, plugin installation, device, locale, time zone, theme, density, entry source, and display context.
 - `onContextChanged`: plugins can update their UI when Core preferences change without implementing a second language or display settings system.
 - `normalizeLocale`, `localeFallbacks` and `localize`: shared locale aliases and requested-locale/language/English fallback for plugin text.
-- Capability APIs for scoped data, media, history, catalog, display, jobs, notifications, network, and events.
+- Capability APIs for scoped data, media, read-only media sources, history, catalog, display, jobs, notifications, network, and events.
+- `mediaSources()`: bounded `list`/`stat`/`probe`/`createPlayback`/`read` operations using Core-owned opaque source and item handles. Plugins never receive WebDAV URLs, endpoints, host paths, credentials, or write/delete operations.
 - `WorkerClient.database()` (provided by Core v0.1+): logical `get`/`put`/`delete`/`list` operations through the Broker; Core binds every call to the organization, user, and plugin installation scope.
 - The same data API exposes an idempotent migration ledger (`migrate`/`migrations`) by version and logical name; it never accepts SQL or migration code.
 - `WorkerClient` and the Wire Protocol: plugins use logical routes through the Broker without public listeners or access to database connections, host paths, or session cookies.
