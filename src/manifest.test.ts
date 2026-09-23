@@ -31,8 +31,10 @@ test("requires a safe explicit entry for isolated workers", () => {
 });
 
 test("requires a safe runtime entry for shared adapters", () => {
-  const shared: PluginManifest = { ...manifest, runtime: "shared-adapter-host", worker: undefined, runtimeEntry: { entry: "./src/worker.ts", protocol: "0.1" } };
+  const shared: PluginManifest = { ...manifest, category: "core-companion", capabilities: ["gateway", "events"], runtime: "shared-adapter-host", worker: undefined, runtimeEntry: { entry: "./src/worker.ts", protocol: "0.1" } };
   assert.doesNotThrow(() => validateManifest(shared));
   assert.throws(() => validateManifest({ ...shared, runtimeEntry: undefined }), ManifestValidationError);
   assert.throws(() => validateManifest({ ...shared, runtimeEntry: { entry: "../worker.ts", protocol: "0.1" } }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...shared, capabilities: ["gateway", "network"] }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...shared, category: "adapter" }), ManifestValidationError);
 });

@@ -9,6 +9,7 @@ const knownCapabilities = new Set<CapabilityName>([
   "diagnostics", "gateway", "network", "browser", "transfer"
 ]);
 const knownRuntimes = new Set<RuntimeGroup>(["shared-adapter-host", "isolated-worker", "wasm-module"]);
+const sharedAdapterCapabilities = new Set<CapabilityName>(["config", "display", "diagnostics", "events", "gateway"]);
 const locales: readonly Locale[] = ["en", "zh-CN", "ko"];
 
 export class ManifestValidationError extends Error {
@@ -44,6 +45,8 @@ export function validateManifest(value: unknown): asserts value is PluginManifes
   if (manifest.runtimeEntry !== undefined && (!workerEntry.test(manifest.runtimeEntry.entry) || manifest.runtimeEntry.entry.includes("..") || manifest.runtimeEntry.protocol !== "0.1")) issues.push("runtime entry or protocol is invalid");
   if (manifest.runtime === "isolated-worker" && manifest.worker === undefined) issues.push("isolated-worker requires a worker entry");
   if (manifest.runtime === "shared-adapter-host" && manifest.runtimeEntry === undefined) issues.push("shared-adapter-host requires a runtime entry");
+  if (manifest.runtime === "shared-adapter-host" && manifest.category !== "core-companion") issues.push("shared-adapter-host is restricted to core-companion category");
+  if (manifest.runtime === "shared-adapter-host" && Array.isArray(manifest.capabilities) && manifest.capabilities.some((capability) => !sharedAdapterCapabilities.has(capability))) issues.push("shared-adapter-host requests a high-risk capability");
   if (manifest.runtime === "wasm-module" && manifest.runtimeEntry === undefined) issues.push("wasm-module requires a runtime entry");
   if (issues.length > 0) throw new ManifestValidationError(issues);
 }
