@@ -356,6 +356,8 @@ export interface PluginManifest {
   category: "core-companion" | "official" | "adapter" | "browser-bridge" | "community";
   runtime: RuntimeGroup;
   capabilities: readonly CapabilityName[];
+  /** Optional names of Core-global service bindings this plugin is allowed to use. */
+  serviceBindings?: readonly string[];
   routes: readonly PluginRoute[];
   /** Relative package entry for an isolated Worker. Core resolves this only from a verified package. */
   worker?: { entry: string; protocol: "0.1" };

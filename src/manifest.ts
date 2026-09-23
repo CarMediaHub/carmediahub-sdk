@@ -10,6 +10,7 @@ const knownCapabilities = new Set<CapabilityName>([
 ]);
 const knownRuntimes = new Set<RuntimeGroup>(["shared-adapter-host", "isolated-worker", "wasm-module"]);
 const sharedAdapterCapabilities = new Set<CapabilityName>(["config", "display", "diagnostics", "events", "gateway"]);
+const bindingName = /^[a-z][a-z0-9-]{1,63}$/;
 const locales: readonly Locale[] = ["en", "zh-CN", "ko"];
 
 export class ManifestValidationError extends Error {
@@ -40,6 +41,7 @@ export function validateManifest(value: unknown): asserts value is PluginManifes
   if (!validLocalized(manifest.description)) issues.push("description must include en, zh-CN, and ko");
   if (!knownRuntimes.has(manifest.runtime as RuntimeGroup)) issues.push("runtime is not supported");
   if (!Array.isArray(manifest.capabilities) || manifest.capabilities.some((capability) => !knownCapabilities.has(capability))) issues.push("capabilities contains an unknown value");
+  if (manifest.serviceBindings !== undefined && (!Array.isArray(manifest.serviceBindings) || new Set(manifest.serviceBindings).size !== manifest.serviceBindings.length || manifest.serviceBindings.some((name) => typeof name !== "string" || !bindingName.test(name)))) issues.push("serviceBindings contains an invalid name");
   if (!Array.isArray(manifest.routes) || manifest.routes.some((route) => !validRoute(route))) issues.push("routes contains an invalid route");
   if (manifest.worker !== undefined && (!workerEntry.test(manifest.worker.entry) || manifest.worker.entry.includes("..") || manifest.worker.protocol !== "0.1")) issues.push("worker entry or protocol is invalid");
   if (manifest.runtimeEntry !== undefined && (!workerEntry.test(manifest.runtimeEntry.entry) || manifest.runtimeEntry.entry.includes("..") || manifest.runtimeEntry.protocol !== "0.1")) issues.push("runtime entry or protocol is invalid");
