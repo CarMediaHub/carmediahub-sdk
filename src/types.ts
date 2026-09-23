@@ -83,6 +83,7 @@ export interface PluginDataStore {
   get<T>(collection: string, key: string): Promise<DataRecord<T> | undefined>;
   put<T>(collection: string, key: string, value: T): Promise<DataRecord<T>>;
   delete(collection: string, key: string): Promise<boolean>;
+  /** Lists records in key order; prefix is matched literally, not as a SQL pattern. */
   list<T>(collection: string, options?: { prefix?: string; limit?: number }): Promise<readonly DataRecord<T>[]>;
   migrate(input: { version: number; name: string }): Promise<PluginDataMigration>;
   migrations(): Promise<readonly PluginDataMigration[]>;
