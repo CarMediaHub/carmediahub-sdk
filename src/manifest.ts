@@ -1,4 +1,4 @@
-import type { CapabilityName, Locale, PluginManifest, PluginRoute, RuntimeGroup } from "./types.js";
+import type { CapabilityName, CoreComponentRole, Locale, PluginComponentDependency, PluginManifest, PluginRoute, RuntimeGroup } from "./types.js";
 
 const manifestId = /^[a-z][a-z0-9-]{2,63}$/;
 const routePath = /^\/[a-zA-Z0-9/_-]*$/;
@@ -12,6 +12,8 @@ const knownRuntimes = new Set<RuntimeGroup>(["shared-adapter-host", "isolated-wo
 const knownCategories = new Set<PluginManifest["category"]>(["core-companion", "official", "adapter", "browser-bridge", "community"]);
 const sharedAdapterCapabilities = new Set<CapabilityName>(["config", "display", "diagnostics", "events", "gateway"]);
 const bindingName = /^[a-z][a-z0-9-]{1,63}$/;
+const componentId = /^[a-z][a-z0-9-]{1,63}$/;
+const componentRoles = new Set<CoreComponentRole>(["storage-service", "webdav", "media-processing", "archive", "network-egress", "browser-engine"]);
 const locales: readonly Locale[] = ["en", "zh-CN", "ko"];
 const methods = new Set<PluginRoute["methods"][number]>(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]);
 
@@ -46,6 +48,14 @@ function validUi(value: unknown): boolean {
   return typeof ui.entry === "string" && workerEntry.test(ui.entry) && !ui.entry.includes("..") && typeof ui.vehicleSupported === "boolean";
 }
 
+function validComponentDependency(value: unknown): value is PluginComponentDependency {
+  if (typeof value !== "object" || value === null) return false;
+  const dependency = value as Partial<PluginComponentDependency>;
+  return typeof dependency.id === "string" && componentId.test(dependency.id)
+    && (dependency.optional === undefined || typeof dependency.optional === "boolean")
+    && (dependency.roles === undefined || (Array.isArray(dependency.roles) && dependency.roles.length > 0 && new Set(dependency.roles).size === dependency.roles.length && dependency.roles.every((role) => componentRoles.has(role))));
+}
+
 export function validateManifest(value: unknown): asserts value is PluginManifest {
   const issues: string[] = [];
   if (typeof value !== "object" || value === null) throw new ManifestValidationError(["manifest must be an object"]);
@@ -59,6 +69,7 @@ export function validateManifest(value: unknown): asserts value is PluginManifes
   if (!knownRuntimes.has(manifest.runtime as RuntimeGroup)) issues.push("runtime is not supported");
   if (!Array.isArray(manifest.capabilities) || new Set(manifest.capabilities).size !== manifest.capabilities.length || manifest.capabilities.some((capability) => !knownCapabilities.has(capability))) issues.push("capabilities contains an unknown or duplicate value");
   if (manifest.serviceBindings !== undefined && (!Array.isArray(manifest.serviceBindings) || new Set(manifest.serviceBindings).size !== manifest.serviceBindings.length || manifest.serviceBindings.some((name) => typeof name !== "string" || !bindingName.test(name)))) issues.push("serviceBindings contains an invalid name");
+  if (manifest.components !== undefined && (!Array.isArray(manifest.components) || new Set(manifest.components.map((dependency) => typeof dependency === "object" && dependency !== null ? (dependency as { id?: unknown }).id : undefined)).size !== manifest.components.length || manifest.components.some((dependency) => !validComponentDependency(dependency)))) issues.push("components contains an invalid or duplicate dependency");
   if (Array.isArray(manifest.serviceBindings) && manifest.serviceBindings.length > 0 && (!Array.isArray(manifest.capabilities) || !manifest.capabilities.includes("network"))) issues.push("serviceBindings requires the network capability");
   if (!Array.isArray(manifest.routes) || manifest.routes.some((route) => !validRoute(route))) issues.push("routes contains an invalid route");
   if (manifest.worker !== undefined && !validEntry(manifest.worker)) issues.push("worker entry or protocol is invalid");

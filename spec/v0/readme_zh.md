@@ -7,6 +7,7 @@
 - `jobs` 能力限制在当前用户和插件安装实例作用域内。初始限制为每个作用域 10 个活跃任务，JSON payload 和结果各限制 64 KiB。队列或大小超限使用稳定目录项 `CMH.JOBS.QUEUE_FULL`、`CMH.JOBS.PAYLOAD_TOO_LARGE` 和 `CMH.JOBS.RESULT_TOO_LARGE`；异常中断和处理器失败分别使用 `CMH.JOBS.INTERRUPTED` 与 `CMH.JOBS.EXECUTION_FAILED`。
 - `history` 能力提供受作用域限制的 `record`、`query` 和 `clear` 操作。插件提交主题对象及显示元数据；Core 负责用户隔离、保留期限、筛选和删除。
 - `catalog` 能力提供受作用域限制的 `register`、`query` 和 `remove`，用于可搜索的插件目录项。Core 负责索引和授权边界；插件只能提交元数据，不能执行 SQL 或查询其他作用域。
+- `components` 是插件对 Core 基础组件的声明性依赖。每项可声明组件 ID、所需角色及是否可选；Core 在安装和升级时校验目录、角色、签名安装记录与健康状态。插件不会获得组件路径、命令、原始进程或宿主环境变量。
 - `display` 能力提供只读显示能力以及 `requestMode` 意图。Core 报告是否支持全屏并可以拒绝请求；插件不会获得窗口或浏览器控制权。
 - `secrets` 能力记录在部署中的插件安装实例上，只允许插件提交 Core 发放的不透明 `credentialRef`。Cookie 或 Authorization 明文由 Core 保管并在受控服务绑定的最后一跳注入；每次使用时引用都会绑定到当前组织、用户和安装实例作用域，撤销后立即失效，插件不能读取或覆盖明文。
 - `locales.json` 定义 v0 的语言传播、别名、回退和消息键规则。

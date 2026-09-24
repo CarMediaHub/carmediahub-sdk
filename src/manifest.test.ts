@@ -29,7 +29,7 @@ test("published JSON Schema describes the current TypeScript manifest contract",
     properties: Record<string, unknown>;
   };
   assert.deepEqual(schema.required, ["id", "version", "sdk", "name", "description", "category", "runtime", "capabilities", "routes"]);
-  for (const field of ["name", "description", "category", "runtime", "capabilities", "routes", "worker", "runtimeEntry", "ui"]) assert.ok(field in schema.properties, `schema is missing current field: ${field}`);
+  for (const field of ["name", "description", "category", "runtime", "capabilities", "serviceBindings", "components", "routes", "worker", "runtimeEntry", "ui"]) assert.ok(field in schema.properties, `schema is missing current field: ${field}`);
   for (const obsolete of ["publisher", "resources", "dataLifecycle"]) assert.equal(obsolete in schema.properties, false, `schema still exposes obsolete field: ${obsolete}`);
 });
 
@@ -38,6 +38,13 @@ test("validates optional global service binding declarations", () => {
   assert.throws(() => validateManifest({ ...manifest, serviceBindings: ["../secret"] }), ManifestValidationError);
   assert.throws(() => validateManifest({ ...manifest, serviceBindings: ["alist-web", "alist-web"] }), ManifestValidationError);
   assert.throws(() => validateManifest({ ...manifest, capabilities: ["gateway"], serviceBindings: ["alist-web"] }), ManifestValidationError);
+});
+
+test("validates declarative Core component dependencies without granting raw component access", () => {
+  assert.doesNotThrow(() => validateManifest({ ...manifest, components: [{ id: "ffmpeg", roles: ["media-processing"] }, { id: "rclone", optional: true }] }));
+  assert.throws(() => validateManifest({ ...manifest, components: [{ id: "ffmpeg", roles: ["unknown"] }] }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, components: [{ id: "ffmpeg" }, { id: "ffmpeg" }] }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, components: [{ id: "ffmpeg", optional: "yes" }] }), ManifestValidationError);
 });
 
 test("rejects missing translations and unknown capabilities", () => {

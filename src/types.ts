@@ -434,6 +434,14 @@ export interface PluginRoute {
   methods: readonly ("GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE")[];
 }
 
+export type CoreComponentRole = "storage-service" | "webdav" | "media-processing" | "archive" | "network-egress" | "browser-engine";
+
+export interface PluginComponentDependency {
+  id: string;
+  roles?: readonly CoreComponentRole[];
+  optional?: boolean;
+}
+
 export interface PluginManifest {
   id: string;
   version: string;
@@ -445,6 +453,8 @@ export interface PluginManifest {
   capabilities: readonly CapabilityName[];
   /** Optional names of Core-global service bindings this plugin is allowed to use. */
   serviceBindings?: readonly string[];
+  /** Declarative requirements resolved by Core; this never exposes component executables to plugins. */
+  components?: readonly PluginComponentDependency[];
   routes: readonly PluginRoute[];
   /** Relative package entry for an isolated Worker. Core resolves this only from a verified package. */
   worker?: { entry: string; protocol: "0.1" };

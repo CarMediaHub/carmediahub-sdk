@@ -21,6 +21,7 @@
       "items": { "enum": ["config", "secrets", "db", "storage", "media", "media-source", "history", "catalog", "display", "jobs", "events", "diagnostics", "gateway", "network", "browser", "transfer"] }
     },
     "serviceBindings": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,63}$" } },
+    "components": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/componentDependency" } },
     "routes": { "type": "array", "items": { "$ref": "#/$defs/route" } },
     "worker": { "$ref": "#/$defs/entry" },
     "runtimeEntry": { "$ref": "#/$defs/entry" },
@@ -49,6 +50,14 @@
       "properties": {
         "path": { "type": "string", "pattern": "^/[A-Za-z0-9/_-]*$" },
         "methods": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"] } }
+      }
+    },
+    "componentDependency": {
+      "type": "object", "additionalProperties": false, "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,63}$" },
+        "roles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["storage-service", "webdav", "media-processing", "archive", "network-egress", "browser-engine"] } },
+        "optional": { "type": "boolean" }
       }
     }
   }
