@@ -9,7 +9,7 @@ Plugins use these public contracts without importing Core internals.
 ## Included capabilities
 
 - `PlatformContext`: user, organization, plugin installation, device, locale, time zone, theme, density, entry source, and display context.
-- `onContextChanged`: plugins can update their UI when Core preferences change without implementing a second language or display settings system.
+- `onContextChanged`: plugins can subscribe to Core preference changes without implementing a second language or display settings system. It supports multiple subscribers and returns a disposer for teardown.
 - `normalizeLocale`, `localeFallbacks` and `localize`: shared locale aliases and requested-locale/language/English fallback for plugin text.
 - Capability APIs for scoped data, media, read-only media sources, history, catalog, display, jobs, notifications, network, and events.
 - `mediaSources()`: bounded `list`/`stat`/`probe`/`createPlayback`/`read` operations using Core-owned opaque source and item handles. Plugins never receive WebDAV URLs, endpoints, host paths, credentials, or write/delete operations.

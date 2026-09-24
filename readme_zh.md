@@ -9,7 +9,7 @@ CarMediaHub SDK 定义插件清单、生命周期契约、平台上下文、能�
 ## SDK 提供的能力
 
 - `PlatformContext`：用户、组织、插件实例、设备、语言、时区、主题、密度、入口来源和显示能力。
-- `onContextChanged`：Core 更新统一偏好时，插件可以热更新界面，不需要重复实现语言或显示设置。
+- `onContextChanged`：Core 更新统一偏好时，插件可以热更新界面，不需要重复实现语言或显示设置。该接口支持多个订阅者，并返回可用于卸载时清理的取消订阅函数。
 - `normalizeLocale`、`localeFallbacks` 和 `localize`：统一语言别名及“请求语言 -> 语言族 -> 英文”的插件文案回退。
 - Capability API：数据、媒体、只读媒体源、历史、目录、显示、任务、通知、网络和事件能力均记录在插件安装实例上授权；每次调用仍由 Core 绑定并重新校验当前组织、用户和安装实例作用域。
 - `mediaSources()`：通过 Core 管理的不透明 source/item handle 提供受限的目录、元数据、探测、播放会话和 Range 读取；插件不会获得 WebDAV URL、端点、宿主路径、凭据，也没有写入/删除能力。
