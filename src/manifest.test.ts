@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
 import { ManifestValidationError, validateManifest } from "./manifest.js";
 import type { PluginManifest } from "./types.js";
@@ -19,6 +21,16 @@ const manifest: PluginManifest = {
 test("validates a complete public manifest", () => {
   assert.doesNotThrow(() => validateManifest(manifest));
   assert.doesNotThrow(() => validateManifest({ ...manifest, capabilities: ["network", "secrets"] }));
+});
+
+test("published JSON Schema describes the current TypeScript manifest contract", () => {
+  const schema = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "../spec/v0/manifest.schema.json"), "utf8")) as {
+    required: string[];
+    properties: Record<string, unknown>;
+  };
+  assert.deepEqual(schema.required, ["id", "version", "sdk", "name", "description", "category", "runtime", "capabilities", "routes"]);
+  for (const field of ["name", "description", "category", "runtime", "capabilities", "routes", "worker", "runtimeEntry", "ui"]) assert.ok(field in schema.properties, `schema is missing current field: ${field}`);
+  for (const obsolete of ["publisher", "resources", "dataLifecycle"]) assert.equal(obsolete in schema.properties, false, `schema still exposes obsolete field: ${obsolete}`);
 });
 
 test("validates optional global service binding declarations", () => {

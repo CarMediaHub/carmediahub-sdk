@@ -2,7 +2,7 @@
 
 本目录存放 CarMediaHub SDK 的评审阶段公开契约。
 
-- `manifest.schema.json` 定义 v0 插件包清单结构。
+- `manifest.schema.json` 是当前 TypeScript `PluginManifest` 校验器的机器可读版本；包工具应同时使用该 Schema 和 SDK 运行时校验器。
 - `errors.json` 定义建议用于 v0 的稳定错误码目录。
 - `jobs` 能力限制在当前用户和插件安装实例作用域内。初始限制为每个作用域 10 个活跃任务，JSON payload 和结果各限制 64 KiB。队列或大小超限使用稳定目录项 `CMH.JOBS.QUEUE_FULL`、`CMH.JOBS.PAYLOAD_TOO_LARGE` 和 `CMH.JOBS.RESULT_TOO_LARGE`；异常中断和处理器失败分别使用 `CMH.JOBS.INTERRUPTED` 与 `CMH.JOBS.EXECUTION_FAILED`。
 - `history` 能力提供受作用域限制的 `record`、`query` 和 `clear` 操作。插件提交主题对象及显示元数据；Core 负责用户隔离、保留期限、筛选和删除。

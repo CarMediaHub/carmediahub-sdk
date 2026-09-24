@@ -2,137 +2,54 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://carmediahub.org/schema/plugin-manifest/v0",
   "title": "CarMediaHub Plugin Manifest v0",
-  "description": "Draft public contract for a CarMediaHub plugin package.",
+  "description": "Machine-readable contract matching @carmediahub/sdk validateManifest.",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "id",
-    "version",
-    "sdk",
-    "publisher",
-    "runtime",
-    "capabilities",
-    "resources",
-    "dataLifecycle"
-  ],
+  "required": ["id", "version", "sdk", "name", "description", "category", "runtime", "capabilities", "routes"],
   "properties": {
-    "id": {
-      "type": "string",
-      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$",
-      "maxLength": 128
-    },
-    "version": {
-      "type": "string",
-      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
-    },
-    "sdk": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["range"],
-      "properties": {
-        "range": { "type": "string", "minLength": 1, "maxLength": 128 }
-      }
-    },
-    "publisher": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name"],
-      "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{1,127}$" },
-        "name": { "type": "string", "minLength": 1, "maxLength": 128 }
-      }
-    },
-    "runtime": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["minimumGroup", "entry"],
-      "properties": {
-        "minimumGroup": {
-          "enum": ["wasm-module", "shared-adapter-host", "isolated-worker"]
-        },
-        "entry": { "type": "string", "pattern": "^(worker|wasm)/[A-Za-z0-9._/-]+$", "maxLength": 256 }
-      }
-    },
-    "ui": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["entry", "navigation"],
-      "properties": {
-        "entry": { "type": "string", "pattern": "^ui/[A-Za-z0-9._/-]+$", "maxLength": 256 },
-        "navigation": { "enum": ["app", "settings", "none"] }
-      }
-    },
-    "routes": {
-      "type": "array",
-      "maxItems": 8,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["path", "access"],
-        "properties": {
-          "path": { "type": "string", "pattern": "^/apps/[a-z0-9][a-z0-9-]*/$", "maxLength": 128 },
-          "access": { "enum": ["authenticated", "administrator"] }
-        }
-      }
-    },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{2,63}$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$" },
+    "sdk": { "type": "string", "minLength": 1 },
+    "name": { "$ref": "#/$defs/localized" },
+    "description": { "$ref": "#/$defs/localized" },
+    "category": { "enum": ["core-companion", "official", "adapter", "browser-bridge", "community"] },
+    "runtime": { "enum": ["shared-adapter-host", "isolated-worker", "wasm-module"] },
+    "migrationStatus": { "type": "string", "minLength": 1 },
+    "upstreamSource": { "type": "string", "minLength": 1 },
     "capabilities": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "database": { "enum": ["private"] },
-        "storage": {
-          "type": "array",
-          "maxItems": 8,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["kind", "mode"],
-            "properties": {
-              "kind": { "enum": ["plugin-data", "media-library"] },
-              "mode": { "enum": ["read", "read-write"] }
-            }
-          }
-        },
-        "media": { "type": "array", "uniqueItems": true, "items": { "enum": ["probe", "remux", "transcode"] } },
-        "display": { "type": "array", "uniqueItems": true, "items": { "enum": ["fullscreen"] } },
-        "network": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["allowHosts"],
-          "properties": {
-            "allowHosts": {
-              "type": "array",
-              "minItems": 1,
-              "maxItems": 32,
-              "uniqueItems": true,
-              "items": { "type": "string", "pattern": "^[a-z0-9.-]+$", "maxLength": 253 }
-            }
-          }
-        },
-        "browser": { "enum": ["named-profile"] },
-        "transfer": { "enum": ["managed"] }
-      }
+      "type": "array", "uniqueItems": true,
+      "items": { "enum": ["config", "secrets", "db", "storage", "media", "media-source", "history", "catalog", "display", "jobs", "events", "diagnostics", "gateway", "network", "browser", "transfer"] }
     },
-    "resources": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["cpu", "memoryMiB", "network"],
-      "properties": {
-        "cpu": { "enum": ["low", "medium", "high"] },
-        "memoryMiB": { "type": "integer", "minimum": 32, "maximum": 4096 },
-        "network": { "enum": ["none", "bounded", "streaming"] }
-      }
+    "serviceBindings": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,63}$" } },
+    "routes": { "type": "array", "items": { "$ref": "#/$defs/route" } },
+    "worker": { "$ref": "#/$defs/entry" },
+    "runtimeEntry": { "$ref": "#/$defs/entry" },
+    "ui": {
+      "type": "object", "additionalProperties": false, "required": ["entry", "vehicleSupported"],
+      "properties": { "entry": { "type": "string", "pattern": "^\\./(?!.*\\.\\.)[A-Za-z0-9_./-]+$" }, "vehicleSupported": { "type": "boolean" } }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "runtime": { "const": "isolated-worker" } } }, "then": { "required": ["worker"] } },
+    { "if": { "properties": { "runtime": { "const": "shared-adapter-host" } } }, "then": { "required": ["runtimeEntry"], "properties": { "category": { "const": "core-companion" }, "capabilities": { "items": { "enum": ["config", "display", "diagnostics", "events", "gateway"] } } } } },
+    { "if": { "properties": { "runtime": { "const": "wasm-module" } } }, "then": { "required": ["runtimeEntry"] } },
+    { "if": { "required": ["serviceBindings"] }, "then": { "required": ["capabilities"], "properties": { "capabilities": { "contains": { "const": "network" } } } } }
+  ],
+  "$defs": {
+    "localized": {
+      "type": "object", "additionalProperties": false, "required": ["en", "zh-CN", "ko"],
+      "properties": { "en": { "type": "string", "minLength": 1 }, "zh-CN": { "type": "string", "minLength": 1 }, "ko": { "type": "string", "minLength": 1 } }
     },
-    "dataLifecycle": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["export", "delete"],
-      "properties": {
-        "export": { "type": "boolean" },
-        "delete": { "enum": ["user-confirmed", "administrator-confirmed"] }
-      }
+    "entry": {
+      "type": "object", "additionalProperties": false, "required": ["entry", "protocol"],
+      "properties": { "entry": { "type": "string", "pattern": "^\\./(?!.*\\.\\.)[A-Za-z0-9_./-]+$" }, "protocol": { "const": "0.1" } }
     },
-    "license": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "category": { "enum": ["core-companion", "official", "adapter", "browser-bridge", "community"] }
+    "route": {
+      "type": "object", "additionalProperties": false, "required": ["path", "methods"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^/[A-Za-z0-9/_-]*$" },
+        "methods": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"] } }
+      }
+    }
   }
 }
