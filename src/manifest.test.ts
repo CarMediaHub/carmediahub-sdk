@@ -45,6 +45,14 @@ test("rejects missing translations and unknown capabilities", () => {
   assert.throws(() => validateManifest(invalid), ManifestValidationError);
 });
 
+test("rejects malformed category, duplicate capabilities, routes, and UI metadata", () => {
+  assert.throws(() => validateManifest({ ...manifest, category: "unknown" }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, capabilities: ["events", "events"] }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, routes: [{ path: "/", methods: ["TRACE"] }] }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, ui: { entry: "../index.html", vehicleSupported: true } }), ManifestValidationError);
+  assert.throws(() => validateManifest({ ...manifest, worker: { entry: "./worker.js", protocol: "0.2" } }), ManifestValidationError);
+});
+
 test("requires a safe explicit entry for isolated workers", () => {
   assert.throws(() => validateManifest({ ...manifest, worker: { entry: "../worker.js", protocol: "0.1" } }), ManifestValidationError);
   assert.throws(() => validateManifest({ ...manifest, worker: undefined }), ManifestValidationError);

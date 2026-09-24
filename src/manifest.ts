@@ -9,9 +9,11 @@ const knownCapabilities = new Set<CapabilityName>([
   "diagnostics", "gateway", "network", "browser", "transfer"
 ]);
 const knownRuntimes = new Set<RuntimeGroup>(["shared-adapter-host", "isolated-worker", "wasm-module"]);
+const knownCategories = new Set<PluginManifest["category"]>(["core-companion", "official", "adapter", "browser-bridge", "community"]);
 const sharedAdapterCapabilities = new Set<CapabilityName>(["config", "display", "diagnostics", "events", "gateway"]);
 const bindingName = /^[a-z][a-z0-9-]{1,63}$/;
 const locales: readonly Locale[] = ["en", "zh-CN", "ko"];
+const methods = new Set<PluginRoute["methods"][number]>(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]);
 
 export class ManifestValidationError extends Error {
   constructor(readonly issues: readonly string[]) {
@@ -26,8 +28,22 @@ function validLocalized(value: unknown): value is Record<Locale, string> {
   return locales.every((locale) => typeof candidate[locale] === "string" && candidate[locale].trim().length > 0);
 }
 
-function validRoute(route: PluginRoute): boolean {
-  return routePath.test(route.path) && route.methods.length > 0 && new Set(route.methods).size === route.methods.length;
+function validRoute(route: unknown): route is PluginRoute {
+  if (typeof route !== "object" || route === null) return false;
+  const candidate = route as Partial<PluginRoute>;
+  return typeof candidate.path === "string" && routePath.test(candidate.path) && Array.isArray(candidate.methods) && candidate.methods.length > 0 && new Set(candidate.methods).size === candidate.methods.length && candidate.methods.every((method) => methods.has(method));
+}
+
+function validEntry(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const entry = value as { entry?: unknown; protocol?: unknown };
+  return typeof entry.entry === "string" && workerEntry.test(entry.entry) && !entry.entry.includes("..") && entry.protocol === "0.1";
+}
+
+function validUi(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const ui = value as { entry?: unknown; vehicleSupported?: unknown };
+  return typeof ui.entry === "string" && workerEntry.test(ui.entry) && !ui.entry.includes("..") && typeof ui.vehicleSupported === "boolean";
 }
 
 export function validateManifest(value: unknown): asserts value is PluginManifest {
@@ -39,13 +55,15 @@ export function validateManifest(value: unknown): asserts value is PluginManifes
   if (typeof manifest.sdk !== "string" || manifest.sdk.length === 0) issues.push("sdk is required");
   if (!validLocalized(manifest.name)) issues.push("name must include en, zh-CN, and ko");
   if (!validLocalized(manifest.description)) issues.push("description must include en, zh-CN, and ko");
+  if (!knownCategories.has(manifest.category as PluginManifest["category"])) issues.push("category is not supported");
   if (!knownRuntimes.has(manifest.runtime as RuntimeGroup)) issues.push("runtime is not supported");
-  if (!Array.isArray(manifest.capabilities) || manifest.capabilities.some((capability) => !knownCapabilities.has(capability))) issues.push("capabilities contains an unknown value");
+  if (!Array.isArray(manifest.capabilities) || new Set(manifest.capabilities).size !== manifest.capabilities.length || manifest.capabilities.some((capability) => !knownCapabilities.has(capability))) issues.push("capabilities contains an unknown or duplicate value");
   if (manifest.serviceBindings !== undefined && (!Array.isArray(manifest.serviceBindings) || new Set(manifest.serviceBindings).size !== manifest.serviceBindings.length || manifest.serviceBindings.some((name) => typeof name !== "string" || !bindingName.test(name)))) issues.push("serviceBindings contains an invalid name");
   if (Array.isArray(manifest.serviceBindings) && manifest.serviceBindings.length > 0 && (!Array.isArray(manifest.capabilities) || !manifest.capabilities.includes("network"))) issues.push("serviceBindings requires the network capability");
   if (!Array.isArray(manifest.routes) || manifest.routes.some((route) => !validRoute(route))) issues.push("routes contains an invalid route");
-  if (manifest.worker !== undefined && (!workerEntry.test(manifest.worker.entry) || manifest.worker.entry.includes("..") || manifest.worker.protocol !== "0.1")) issues.push("worker entry or protocol is invalid");
-  if (manifest.runtimeEntry !== undefined && (!workerEntry.test(manifest.runtimeEntry.entry) || manifest.runtimeEntry.entry.includes("..") || manifest.runtimeEntry.protocol !== "0.1")) issues.push("runtime entry or protocol is invalid");
+  if (manifest.worker !== undefined && !validEntry(manifest.worker)) issues.push("worker entry or protocol is invalid");
+  if (manifest.runtimeEntry !== undefined && !validEntry(manifest.runtimeEntry)) issues.push("runtime entry or protocol is invalid");
+  if (manifest.ui !== undefined && !validUi(manifest.ui)) issues.push("ui entry or vehicle support flag is invalid");
   if (manifest.runtime === "isolated-worker" && manifest.worker === undefined) issues.push("isolated-worker requires a worker entry");
   if (manifest.runtime === "shared-adapter-host" && manifest.runtimeEntry === undefined) issues.push("shared-adapter-host requires a runtime entry");
   if (manifest.runtime === "shared-adapter-host" && manifest.category !== "core-companion") issues.push("shared-adapter-host is restricted to core-companion category");
