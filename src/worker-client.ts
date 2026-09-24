@@ -142,65 +142,65 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     close: () => { abortActiveGateway(); contextChangedHandlers.clear(); socket.end(); },
     call: async <T>(method: string, params?: unknown) => {
       const response = await call(method, params);
-      if (response.error !== undefined) throw new Error(response.error.messageKey);
+      if (response.error !== undefined) throw new CmhError(response.error);
       return response.result as T;
     },
     jobs: () => ({
-      enqueue: async (type, payload) => call("jobs.enqueue", { type, payload }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
-      list: async (options = {}) => call("jobs.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { jobs: readonly PluginJob[] }).jobs; }),
-      cancel: async (id) => call("jobs.cancel", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { job?: PluginJob }).job; })
+      enqueue: async (type, payload) => call("jobs.enqueue", { type, payload }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as PluginJob; }),
+      list: async (options = {}) => call("jobs.list", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { jobs: readonly PluginJob[] }).jobs; }),
+      cancel: async (id) => call("jobs.cancel", { id }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { job?: PluginJob }).job; })
     }),
     database: () => ({
-      get: async <T>(collection: string, key: string) => call("data.get", { collection, key }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { record?: DataRecord<T> }).record; }),
-      put: async <T>(collection: string, key: string, value: T) => call("data.put", { collection, key, value }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { record: DataRecord<T> }).record; }),
-      delete: async (collection: string, key: string) => call("data.delete", { collection, key }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { deleted: boolean }).deleted; }),
-      list: async <T>(collection: string, options: { prefix?: string; limit?: number } = {}) => call("data.list", { collection, ...options }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { records: readonly DataRecord<T>[] }).records; }),
-      migrate: async (input: { version: number; name: string }) => call("data.migrate", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { migration: PluginDataMigration }).migration; }),
-      migrations: async () => call("data.migrations").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { migrations: readonly PluginDataMigration[] }).migrations; })
+      get: async <T>(collection: string, key: string) => call("data.get", { collection, key }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { record?: DataRecord<T> }).record; }),
+      put: async <T>(collection: string, key: string, value: T) => call("data.put", { collection, key, value }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { record: DataRecord<T> }).record; }),
+      delete: async (collection: string, key: string) => call("data.delete", { collection, key }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { deleted: boolean }).deleted; }),
+      list: async <T>(collection: string, options: { prefix?: string; limit?: number } = {}) => call("data.list", { collection, ...options }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { records: readonly DataRecord<T>[] }).records; }),
+      migrate: async (input: { version: number; name: string }) => call("data.migrate", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { migration: PluginDataMigration }).migration; }),
+      migrations: async () => call("data.migrations").then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { migrations: readonly PluginDataMigration[] }).migrations; })
     }),
     history: () => ({
-      record: async (input) => call("history.record", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as HistoryEntry; }),
-      query: async (options = {}) => call("history.query", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { entries: readonly HistoryEntry[] }).entries; }),
-      clear: async (options = {}) => call("history.clear", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { cleared: number }).cleared; })
+      record: async (input) => call("history.record", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as HistoryEntry; }),
+      query: async (options = {}) => call("history.query", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { entries: readonly HistoryEntry[] }).entries; }),
+      clear: async (options = {}) => call("history.clear", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { cleared: number }).cleared; })
     }),
     catalog: () => ({
-      register: async (input) => call("catalog.register", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as CatalogEntry; }),
-      query: async (options = {}) => call("catalog.query", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { entries: readonly CatalogEntry[] }).entries; }),
-      remove: async (id) => call("catalog.remove", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { removed: boolean }).removed; })
+      register: async (input) => call("catalog.register", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as CatalogEntry; }),
+      query: async (options = {}) => call("catalog.query", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { entries: readonly CatalogEntry[] }).entries; }),
+      remove: async (id) => call("catalog.remove", { id }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { removed: boolean }).removed; })
     }),
     display: () => ({
       capabilities: () => ({ ...currentContext.display, input: [...currentContext.display.input], viewport: { ...currentContext.display.viewport } }),
-      requestMode: async (mode: DisplayMode) => call("display.requestMode", { mode }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as { mode: DisplayMode; accepted: boolean; reason?: "unsupported" | "user-action-required" }; })
+      requestMode: async (mode: DisplayMode) => call("display.requestMode", { mode }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as { mode: DisplayMode; accepted: boolean; reason?: "unsupported" | "user-action-required" }; })
     }),
     media: () => ({
-      createPlayback: async (mediaId: string) => call("media.createPlayback", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PlaybackSession; }),
-      probe: async (mediaId: string) => call("media.probe", { mediaId }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaProbe; }),
-      requestTransform: async (mediaId: string, request: MediaTransformRequest) => call("media.transform", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
-      readOutput: async (outputId: string, start: number, end: number) => call("media.readOutput", { outputId, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaTransformOutputRead; }),
-      requestHls: async (mediaId: string, request: MediaHlsRequest = {}) => call("media.hls", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as PluginJob; }),
-      readHlsAsset: async (sessionId: string, asset: string, start: number, end: number) => call("media.readHlsAsset", { sessionId, asset, start, end }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as import("./types.js").MediaHlsAssetRead; })
+      createPlayback: async (mediaId: string) => call("media.createPlayback", { mediaId }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as PlaybackSession; }),
+      probe: async (mediaId: string) => call("media.probe", { mediaId }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as MediaProbe; }),
+      requestTransform: async (mediaId: string, request: MediaTransformRequest) => call("media.transform", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as PluginJob; }),
+      readOutput: async (outputId: string, start: number, end: number) => call("media.readOutput", { outputId, start, end }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as import("./types.js").MediaTransformOutputRead; }),
+      requestHls: async (mediaId: string, request: MediaHlsRequest = {}) => call("media.hls", { mediaId, ...request }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as PluginJob; }),
+      readHlsAsset: async (sessionId: string, asset: string, start: number, end: number) => call("media.readHlsAsset", { sessionId, asset, start, end }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as import("./types.js").MediaHlsAssetRead; })
     }),
     mediaSources: () => ({
-      list: async (input: MediaSourceListRequest) => call("mediaSource.list", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceListResult; }),
-      stat: async (sourceHandle: string, itemHandle: string) => call("mediaSource.stat", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceStat; }),
-      probe: async (sourceHandle: string, itemHandle: string) => call("mediaSource.probe", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceProbe; }),
-      createPlayback: async (sourceHandle: string, itemHandle: string) => call("mediaSource.createPlayback", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourcePlaybackSession; }),
-      read: async (input: MediaSourceReadRequest) => call("mediaSource.read", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceReadResult; })
+      list: async (input: MediaSourceListRequest) => call("mediaSource.list", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as MediaSourceListResult; }),
+      stat: async (sourceHandle: string, itemHandle: string) => call("mediaSource.stat", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as MediaSourceStat; }),
+      probe: async (sourceHandle: string, itemHandle: string) => call("mediaSource.probe", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as MediaSourceProbe; }),
+      createPlayback: async (sourceHandle: string, itemHandle: string) => call("mediaSource.createPlayback", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as MediaSourcePlaybackSession; }),
+      read: async (input: MediaSourceReadRequest) => call("mediaSource.read", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as MediaSourceReadResult; })
     }),
     network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as NetworkResponse; }) }),
     browser: () => ({
-      request: async (input: BrowserSessionRequest) => call("browser.session.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as BrowserSession; }),
-      list: async () => call("browser.session.list").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { sessions: readonly BrowserSession[] }).sessions; }),
-      revoke: async (id: string) => call("browser.session.revoke", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { revoked: boolean }).revoked; }),
-      enqueue: async (input: BrowserTaskRequest) => call("browser.task.enqueue", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as BrowserTask; }),
-      tasks: async () => call("browser.task.list").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { tasks: readonly BrowserTask[] }).tasks; }),
-      cancelTask: async (id: string) => call("browser.task.cancel", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { task?: BrowserTask }).task; })
+      request: async (input: BrowserSessionRequest) => call("browser.session.request", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as BrowserSession; }),
+      list: async () => call("browser.session.list").then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { sessions: readonly BrowserSession[] }).sessions; }),
+      revoke: async (id: string) => call("browser.session.revoke", { id }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { revoked: boolean }).revoked; }),
+      enqueue: async (input: BrowserTaskRequest) => call("browser.task.enqueue", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as BrowserTask; }),
+      tasks: async () => call("browser.task.list").then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { tasks: readonly BrowserTask[] }).tasks; }),
+      cancelTask: async (id: string) => call("browser.task.cancel", { id }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { task?: BrowserTask }).task; })
     }),
     notifications: () => ({
-      publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as Notification; }),
-      list: async (options = {}) => call("notifications.list", options).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { notifications: readonly Notification[] }).notifications; }),
-      markRead: async (id) => call("notifications.markRead", { id }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { marked: boolean }).marked; }),
-      markAllRead: async () => call("notifications.markAllRead").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { marked: number }).marked; })
+      publish: async (input) => call("notifications.publish", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as Notification; }),
+      list: async (options = {}) => call("notifications.list", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { notifications: readonly Notification[] }).notifications; }),
+      markRead: async (id) => call("notifications.markRead", { id }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { marked: boolean }).marked; }),
+      markAllRead: async () => call("notifications.markAllRead").then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { marked: number }).marked; })
     }),
     onGatewayRequest: (handler) => { gatewayHandler = handler; },
     onContextChanged: (handler) => { contextChangedHandlers.add(handler); return () => contextChangedHandlers.delete(handler); }

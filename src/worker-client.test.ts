@@ -7,6 +7,7 @@ import path from "node:path";
 import test from "node:test";
 import { encodeFrame, FrameDecoder } from "./wire.js";
 import { connectWorkerClient } from "./worker-client.js";
+import { CmhError } from "./error.js";
 import type { RpcRequest } from "./types.js";
 
 function endpoint(): string {
@@ -26,7 +27,8 @@ test("worker client completes local handshake and returns a logical gateway resp
         else if (request.method === "worker.prove") {
           socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context: { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", timeZone: "UTC", theme: "system", density: "comfortable", entry: "navigation", display: { deviceClass: "vehicle", input: ["touch"], fullscreenAvailable: true, viewport: { width: 1920, height: 1200 } }, grantedCapabilities: ["media", "history"], policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
           setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", id: "gateway_1", method: "gateway.request", params: { method: "GET", path: "/library", context: { locale: "ko", policyVersion: 1 } }, meta: { schemaVersion: "0.1", requestId: "gateway_1", traceId: "gateway_1", deadlineUnixMs: Date.now() + 5_000, installationId: "plugin" } })), 10);
-        } else if (request.id === "gateway_1") resolveGateway((request as unknown as { result?: unknown }).result);
+        } else if (request.method === "jobs.list") socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, error: { code: "CMH.JOBS.QUEUE_FULL", messageKey: "errors.jobs.queueFull", retryable: true, diagnosticId: "diag_jobs", details: { limit: 10 } }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
+        else if (request.id === "gateway_1") resolveGateway((request as unknown as { result?: unknown }).result);
       }
     });
   });
@@ -36,6 +38,11 @@ test("worker client completes local handshake and returns a logical gateway resp
     assert.deepEqual(client.context.display, { deviceClass: "vehicle", input: ["touch"], fullscreenAvailable: true, viewport: { width: 1920, height: 1200 } });
     assert.equal(client.context.entry, "navigation");
     assert.deepEqual(client.context.grantedCapabilities, ["media", "history"]);
+    await assert.rejects(() => client.jobs().list(), (error: unknown) => error instanceof CmhError
+      && error.code === "CMH.JOBS.QUEUE_FULL"
+      && error.retryable === true
+      && error.diagnosticId === "diag_jobs"
+      && error.details?.limit === 10);
     client.onGatewayRequest((input) => ({ status: 200, body: { path: input.path, locale: input.context?.locale } }));
     assert.deepEqual(await gatewayResponse, { status: 200, body: { path: "/library", locale: "ko" } });
     client.close();
