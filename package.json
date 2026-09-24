@@ -20,6 +20,7 @@
     "sbom": "node scripts/generate-sbom.mjs",
     "check": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test src/**/*.test.ts",
+    "verify": "pnpm check && pnpm test && pnpm build",
     "test:coverage": "tsx --test --experimental-test-coverage src/**/*.test.ts"
   },
   "devDependencies": {
