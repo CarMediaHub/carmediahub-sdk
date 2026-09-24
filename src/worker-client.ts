@@ -85,7 +85,9 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
           const changed = (rpc.params as { context?: unknown } | undefined)?.context;
           if (isWorkerContext(changed)) {
             currentContext = changed;
-            for (const handler of contextChangedHandlers) handler(changed);
+            for (const handler of contextChangedHandlers) {
+              try { handler(changed); } catch { /* subscriber failures must not corrupt the Broker transport */ }
+            }
           }
           continue;
         }
