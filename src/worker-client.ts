@@ -77,11 +77,13 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
           continue;
         }
         if (rpc.method === "$/cancelRequest") {
+          if (rpc.meta?.installationId !== options.installationId) continue;
           const id = (rpc.params as { id?: unknown } | undefined)?.id;
           if (typeof id === "string") activeGateway.get(id)?.abort();
           continue;
         }
         if (rpc.method === "context.changed") {
+          if (rpc.meta?.installationId !== options.installationId) continue;
           const changed = (rpc.params as { context?: unknown } | undefined)?.context;
           if (isWorkerContext(changed) && currentContext !== undefined && sameScope(changed, currentContext)) {
             currentContext = changed;
@@ -92,6 +94,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
           continue;
         }
         if (rpc.method === "gateway.request" && typeof rpc.id === "string") {
+          if (rpc.meta?.installationId !== options.installationId) continue;
           const controller = new AbortController();
           activeGateway.set(rpc.id, controller);
           void Promise.resolve(gatewayHandler?.(rpc.params as GatewayWorkerRequest, controller.signal) ?? { status: 503, body: { code: "CMH.WORKER.NOT_READY" } })
