@@ -30,10 +30,10 @@
     }
   },
   "allOf": [
-    { "if": { "properties": { "runtime": { "const": "isolated-worker" } } }, "then": { "required": ["worker"] } },
-    { "if": { "properties": { "runtime": { "const": "shared-adapter-host" } } }, "then": { "required": ["runtimeEntry"], "properties": { "category": { "const": "core-companion" }, "capabilities": { "items": { "enum": ["config", "display", "diagnostics", "events", "gateway"] } } } } },
-    { "if": { "properties": { "runtime": { "const": "wasm-module" } } }, "then": { "required": ["runtimeEntry"] } },
-    { "if": { "required": ["serviceBindings"] }, "then": { "required": ["capabilities"], "properties": { "capabilities": { "contains": { "const": "network" } } } } }
+    { "if": { "properties": { "runtime": { "const": "isolated-worker" } } }, "then": { "required": ["worker"], "properties": { "worker": { "$ref": "#/$defs/entry" } } } },
+    { "if": { "properties": { "runtime": { "const": "shared-adapter-host" } } }, "then": { "required": ["runtimeEntry"], "properties": { "category": { "const": "core-companion" }, "capabilities": { "type": "array", "items": { "enum": ["config", "display", "diagnostics", "events", "gateway"] } }, "runtimeEntry": { "$ref": "#/$defs/entry" } } } },
+    { "if": { "properties": { "runtime": { "const": "wasm-module" } } }, "then": { "required": ["runtimeEntry"], "properties": { "runtimeEntry": { "$ref": "#/$defs/entry" } } } },
+    { "if": { "required": ["serviceBindings"], "properties": { "serviceBindings": {} } }, "then": { "required": ["capabilities"], "properties": { "capabilities": { "type": "array", "contains": { "const": "network" } } } } }
   ],
   "$defs": {
     "localized": {
