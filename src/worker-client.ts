@@ -83,7 +83,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
         }
         if (rpc.method === "context.changed") {
           const changed = (rpc.params as { context?: unknown } | undefined)?.context;
-          if (isWorkerContext(changed)) {
+          if (isWorkerContext(changed) && currentContext !== undefined && sameScope(changed, currentContext)) {
             currentContext = changed;
             for (const handler of contextChangedHandlers) {
               try { handler(changed); } catch { /* subscriber failures must not corrupt the Broker transport */ }
@@ -218,6 +218,15 @@ function isWorkerContext(value: unknown): value is WorkerContext {
     && typeof scope.deploymentId === "string" && typeof scope.organizationId === "string"
     && typeof scope.userId === "string" && typeof scope.deviceId === "string"
     && typeof scope.sessionId === "string" && typeof scope.installationId === "string";
+}
+
+function sameScope(left: WorkerContext, right: WorkerContext): boolean {
+  return left.scope.deploymentId === right.scope.deploymentId
+    && left.scope.organizationId === right.scope.organizationId
+    && left.scope.userId === right.scope.userId
+    && left.scope.deviceId === right.scope.deviceId
+    && left.scope.sessionId === right.scope.sessionId
+    && left.scope.installationId === right.scope.installationId;
 }
 
 const capabilityNames = new Set<CapabilityName>(["config", "secrets", "db", "storage", "media", "media-source", "history", "catalog", "display", "jobs", "events", "diagnostics", "gateway", "network", "browser", "transfer"]);

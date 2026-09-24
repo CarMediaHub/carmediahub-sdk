@@ -123,7 +123,10 @@ test("worker client applies broker context changes without reconnecting", async 
         else if (request.method === "worker.prove") {
           const context = { scope: { deploymentId: "d", organizationId: "o", userId: "u", deviceId: "device", sessionId: "session", installationId: "plugin" }, locale: "en", timeZone: "UTC", theme: "system", density: "comfortable", entry: "navigation", display: { deviceClass: "unknown", input: [], fullscreenAvailable: false, viewport: { width: 0, height: 0 } }, policyVersion: 1 } as const;
           socket.write(encodeFrame({ jsonrpc: "2.0", id: request.id, result: { type: "broker.welcome", context }, meta: { schemaVersion: "0.1", requestId: request.meta.requestId, traceId: request.meta.traceId } }));
-          setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change", traceId: "context-change", deadlineUnixMs: 0, installationId: "plugin" } })), 10);
+          setTimeout(() => {
+            socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, scope: { ...context.scope, userId: "other-user" }, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change-invalid", traceId: "context-change-invalid", deadlineUnixMs: 0, installationId: "plugin" } }));
+            setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change", traceId: "context-change", deadlineUnixMs: 0, installationId: "plugin" } })), 10);
+          }, 10);
         }
       }
     });
@@ -134,8 +137,8 @@ test("worker client applies broker context changes without reconnecting", async 
     let callbacks = 0;
     const changed = new Promise<void>((resolve) => {
       client.onContextChanged(() => { throw new Error("subscriber failed"); });
-      client.onContextChanged((context) => { assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); assert.equal(client.context.policyVersion, 2); callbacks += 1; if (callbacks === 2) resolve(); });
-      client.onContextChanged((context) => { assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); callbacks += 1; if (callbacks === 2) resolve(); });
+      client.onContextChanged((context) => { assert.equal(context.scope.userId, "u"); assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); assert.equal(client.context.policyVersion, 2); callbacks += 1; if (callbacks === 2) resolve(); });
+      client.onContextChanged((context) => { assert.equal(context.scope.userId, "u"); assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); callbacks += 1; if (callbacks === 2) resolve(); });
       const dispose = client.onContextChanged(() => { callbacks += 100; });
       assert.equal(typeof dispose, "function");
       dispose();
