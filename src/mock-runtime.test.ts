@@ -50,6 +50,8 @@ test("keeps mock data validation and ordering aligned with Core adapters", async
   assert.deepEqual((await runtime.database().list("settings")).map((record) => record.key), ["a-first", "z-last"]);
   await assert.rejects(() => runtime.database().put("settings", "missing", undefined), /JSON serializable/);
   await assert.rejects(() => runtime.database().list("settings", { prefix: "bad/prefix" }), /lowercase identifier/);
+  await assert.rejects(() => runtime.database().delete("settings/bad", "key"), /lowercase identifier/);
+  await assert.rejects(() => runtime.database().delete("settings", "bad/key"), /lowercase identifier/);
 });
 
 test("rejects ungranted capability", () => {
