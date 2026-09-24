@@ -30,9 +30,10 @@ The v0 contract supports `en`, `zh-CN`, and `ko`. Plugins inherit the locale, ti
 
 ```powershell
 pnpm install
-pnpm test
-pnpm build
+pnpm verify
 ```
+
+`pnpm verify` runs the type check, contract tests, and package build.
 
 The package currently provides strict TypeScript types for manifests, scope/context, capabilities, errors and events, plus a memory runtime for contract tests.
 

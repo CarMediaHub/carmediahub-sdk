@@ -29,3 +29,12 @@ v0 계약은 `en`, `zh-CN`, `ko`를 지원합니다. 플러그인은 Core가 전
 ## 초안 계약
 
 검토 단계의 v0 계약은 [`spec/v0`](spec/v0/readme_ko.md)에 있습니다. 실행 중인 Core 없이도 매니페스트 검증과 안정적인 오류 식별자를 정의합니다.
+
+## 로컬 검증
+
+```powershell
+pnpm install
+pnpm verify
+```
+
+`pnpm verify`는 타입 검사, 계약 테스트와 SDK 빌드를 순서대로 실행합니다.

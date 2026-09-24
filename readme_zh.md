@@ -34,6 +34,7 @@ v0 契约固定支持 `en`、`zh-CN` 和 `ko`。插件应继承 Core 提供的 l
 
 ```powershell
 pnpm install
-pnpm test
-pnpm build
+pnpm verify
 ```
+
+`pnpm verify` 会依次执行类型检查、契约测试和 SDK 构建。
