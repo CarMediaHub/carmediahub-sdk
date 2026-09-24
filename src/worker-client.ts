@@ -1,7 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
-import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaSourceListRequest, MediaSourceListResult, MediaSourceProbe, MediaSourceReadRequest, MediaSourceReadResult, MediaSourceService, MediaSourceStat, MediaSourcePlaybackSession, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataMigration, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
+import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaSourceListRequest, MediaSourceListResult, MediaSourceProbe, MediaSourceReadRequest, MediaSourceReadResult, MediaSourceService, MediaSourceStat, MediaSourcePlaybackSession, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataMigration, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
   endpoint: string;
@@ -124,10 +124,10 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     });
   };
   const hello = await call("broker.hello", { workerVersion: "0.1" });
-  if ((hello.result as { type?: string } | undefined)?.type !== "broker.challenge") throw new Error("Broker handshake was denied");
+  if ((hello.result as { type?: string } | undefined)?.type !== "broker.challenge") { socket.destroy(); throw new Error("Broker handshake was denied"); }
   const welcome = await call("worker.prove", { runtimeCredential: options.runtimeCredential });
   const welcomeResult = welcome.result as { type?: string; context?: unknown } | undefined;
-  if (welcomeResult?.type !== "broker.welcome" || !isWorkerContext(welcomeResult.context)) throw new Error("Broker handshake was denied");
+  if (welcomeResult?.type !== "broker.welcome" || !isWorkerContext(welcomeResult.context)) { socket.destroy(); throw new Error("Broker handshake was denied"); }
   currentContext = welcomeResult.context;
   return {
     get context() { return currentContext; },
@@ -209,13 +209,15 @@ function isWorkerContext(value: unknown): value is WorkerContext {
     && (candidate.density === "comfortable" || candidate.density === "compact")
     && (candidate.entry === "navigation" || candidate.entry === "key")
     && isDisplayContext(candidate.display)
-    && (candidate.grantedCapabilities === undefined || (Array.isArray(candidate.grantedCapabilities) && candidate.grantedCapabilities.every((capability) => typeof capability === "string")))
+    && (candidate.grantedCapabilities === undefined || (Array.isArray(candidate.grantedCapabilities) && candidate.grantedCapabilities.every((capability) => typeof capability === "string" && capabilityNames.has(capability as CapabilityName))))
     && typeof candidate.policyVersion === "number" && Number.isSafeInteger(candidate.policyVersion) && candidate.policyVersion >= 1
     && scope !== undefined
     && typeof scope.deploymentId === "string" && typeof scope.organizationId === "string"
     && typeof scope.userId === "string" && typeof scope.deviceId === "string"
     && typeof scope.sessionId === "string" && typeof scope.installationId === "string";
 }
+
+const capabilityNames = new Set<CapabilityName>(["config", "secrets", "db", "storage", "media", "media-source", "history", "catalog", "display", "jobs", "events", "diagnostics", "gateway", "network", "browser", "transfer"]);
 
 function isDisplayContext(value: unknown): value is WorkerContext["display"] {
   if (value === null || typeof value !== "object") return false;
