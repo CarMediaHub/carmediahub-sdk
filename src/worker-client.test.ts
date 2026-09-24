@@ -80,7 +80,7 @@ test("worker client emits ordered response stream frames", async () => {
   }
 });
 
-test("worker client aborts an active gateway request", async () => {
+test("worker client closes an active gateway request", async () => {
   const address = endpoint();
   let aborted = false;
   const server = net.createServer((socket) => {
@@ -103,6 +103,7 @@ test("worker client aborts an active gateway request", async () => {
   try {
     const client = await connectWorkerClient({ endpoint: address, installationId: "plugin", runtimeCredential: "credential" });
     client.onGatewayRequest((_request, signal) => new Promise((_resolve, reject) => { signal.addEventListener("abort", () => { aborted = true; reject(new Error("aborted")); }, { once: true }); }));
+    setTimeout(() => client.close(), 8);
     await new Promise((resolve) => setTimeout(resolve, 60));
     assert.equal(aborted, true);
     client.close();

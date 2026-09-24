@@ -63,9 +63,10 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   const contextChangedHandlers = new Set<(context: WorkerContext) => void>();
   const activeGateway = new Map<string, AbortController>();
   const pending = new Map<string, { resolve(value: RpcResponse): void; reject(error: Error): void }>();
+  const abortActiveGateway = () => { for (const controller of activeGateway.values()) controller.abort(); activeGateway.clear(); };
   const fail = (error: Error) => { for (const entry of pending.values()) entry.reject(error); pending.clear(); };
   socket.on("error", fail);
-  socket.on("close", () => { contextChangedHandlers.clear(); fail(new Error("Broker connection closed")); });
+  socket.on("close", () => { abortActiveGateway(); contextChangedHandlers.clear(); fail(new Error("Broker connection closed")); });
   socket.on("data", (chunk: Buffer) => {
     try {
       for (const message of decoder.push(chunk)) {
@@ -137,7 +138,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   currentContext = welcomeResult.context;
   return {
     get context() { return currentContext; },
-    close: () => { contextChangedHandlers.clear(); socket.end(); },
+    close: () => { abortActiveGateway(); contextChangedHandlers.clear(); socket.end(); },
     call: async <T>(method: string, params?: unknown) => {
       const response = await call(method, params);
       if (response.error !== undefined) throw new Error(response.error.messageKey);
