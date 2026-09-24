@@ -13,14 +13,14 @@ Plugins use these public contracts without importing Core internals.
 - `normalizeLocale`, `localeFallbacks` and `localize`: shared locale aliases and requested-locale/language/English fallback for plugin text.
 - Capability APIs for scoped data, media, read-only media sources, history, catalog, display, jobs, notifications, network, and events.
 - `mediaSources()`: bounded `list`/`stat`/`probe`/`createPlayback`/`read` operations using Core-owned opaque source and item handles. Plugins never receive WebDAV URLs, endpoints, host paths, credentials, or write/delete operations.
-- `WorkerClient.database()` (provided by Core v0.1+): logical `get`/`put`/`delete`/`list` operations through the Broker; Core binds every call to the organization, user, and plugin installation scope.
+- `WorkerClient.database()` (provided by Core v0.1+): logical `get`/`put`/`delete`/`list` operations through the Broker. The capability grant belongs to the installed plugin instance; Core binds and rechecks every call against the current organization, user, and plugin-installation scope.
 - The same data API exposes an idempotent migration ledger (`migrate`/`migrations`) by version and logical name; it never accepts SQL or migration code.
 - `WorkerClient` and the Wire Protocol: plugins use logical routes through the Broker without public listeners or access to database connections, host paths, or session cookies.
 - `Memory Runtime` for contract tests. It is not a production storage or media executor.
 
 ## Runtime boundary
 
-A Manifest requests capabilities; it is not a general system-call interface. Plugins cannot submit shell commands, host paths, arbitrary environment variables, database DSNs, or undeclared capabilities. Core owns authentication, scope, authorization, resource limits, and error redaction; plugins use only SDK-defined logical APIs.
+A Manifest requests capabilities; the grant is stored on the deployment's plugin installation and may only be reduced by an administrator. It is not a general system-call interface. Plugins cannot submit shell commands, host paths, arbitrary environment variables, database DSNs, or undeclared capabilities. Core owns authentication, per-call scope, authorization, resource limits, and error redaction; plugins use only SDK-defined logical APIs.
 
 ## Version and locales
 

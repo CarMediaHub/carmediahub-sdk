@@ -11,16 +11,16 @@ CarMediaHub SDK 定义插件清单、生命周期契约、平台上下文、能�
 - `PlatformContext`：用户、组织、插件实例、设备、语言、时区、主题、密度、入口来源和显示能力。
 - `onContextChanged`：Core 更新统一偏好时，插件可以热更新界面，不需要重复实现语言或显示设置。
 - `normalizeLocale`、`localeFallbacks` 和 `localize`：统一语言别名及“请求语言 -> 语言族 -> 英文”的插件文案回退。
-- Capability API：数据、媒体、只读媒体源、历史、目录、显示、任务、通知、网络和事件能力均按安装实例授权。
+- Capability API：数据、媒体、只读媒体源、历史、目录、显示、任务、通知、网络和事件能力均记录在插件安装实例上授权；每次调用仍由 Core 绑定并重新校验当前组织、用户和安装实例作用域。
 - `mediaSources()`：通过 Core 管理的不透明 source/item handle 提供受限的目录、元数据、探测、播放会话和 Range 读取；插件不会获得 WebDAV URL、端点、宿主路径、凭据，也没有写入/删除能力。
-- `WorkerClient.database()`（Core v0.1+ 提供）：通过 Broker 提供逻辑 `get`/`put`/`delete`/`list` 操作；Core 为每次调用绑定组织、用户和插件安装实例作用域。
+- `WorkerClient.database()`（Core v0.1+ 提供）：通过 Broker 提供逻辑 `get`/`put`/`delete`/`list` 操作。能力授权归属于部署中的插件安装实例；Core 为每次调用绑定并重新校验当前组织、用户和插件安装实例作用域。
 - 同一数据 API 提供按版本和逻辑名称记录的幂等迁移台账（`migrate`/`migrations`）；不接受 SQL 或迁移代码。
 - `WorkerClient` 与 Wire Protocol：插件通过 Broker 使用逻辑路由和受控请求，不监听公网端口，不接触数据库连接、宿主路径或会话 Cookie。
 - Memory Runtime：用于插件契约测试，不代表生产环境的存储或媒体执行器。
 
 ## 运行边界
 
-Manifest 是权限申请，不是任意系统调用入口。插件不能提交 Shell 命令、宿主路径、任意环境变量、数据库 DSN 或未声明的能力。Core 负责认证、作用域、授权、资源限制和错误脱敏；插件只使用 SDK 定义的逻辑 API。
+Manifest 是权限申请，授权记录在部署中的插件安装实例上，并且管理员只能收紧已声明能力；它不是任意系统调用入口。插件不能提交 Shell 命令、宿主路径、任意环境变量、数据库 DSN 或未声明的能力。Core 负责认证、每次调用的作用域、授权、资源限制和错误脱敏；插件只使用 SDK 定义的逻辑 API。
 
 ## 版本和语言
 
