@@ -126,7 +126,10 @@ test("worker client applies broker context changes without reconnecting", async 
           setTimeout(() => {
             socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change-invalid", traceId: "context-change-invalid", deadlineUnixMs: 0, installationId: "other-plugin" } }));
             socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, scope: { ...context.scope, userId: "other-user" }, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change-invalid-scope", traceId: "context-change-invalid-scope", deadlineUnixMs: 0, installationId: "plugin" } }));
-            setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change", traceId: "context-change", deadlineUnixMs: 0, installationId: "plugin" } })), 10);
+            setTimeout(() => {
+              socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, locale: "ko", theme: "dark", policyVersion: 2 } }, meta: { schemaVersion: "0.1", requestId: "context-change", traceId: "context-change", deadlineUnixMs: 0, installationId: "plugin" } }));
+              setTimeout(() => socket.write(encodeFrame({ jsonrpc: "2.0", method: "context.changed", params: { context: { ...context, locale: "en", theme: "system", policyVersion: 3 } }, meta: { schemaVersion: "0.1", requestId: "context-after-close", traceId: "context-after-close", deadlineUnixMs: 0, installationId: "plugin" } })), 30);
+            }, 10);
           }, 10);
         }
       }
@@ -147,6 +150,8 @@ test("worker client applies broker context changes without reconnecting", async 
     await changed;
     assert.equal(callbacks, 2);
     client.close();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    assert.equal(callbacks, 2);
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
     if (process.platform !== "win32") fs.rmSync(path.dirname(address), { recursive: true, force: true });
