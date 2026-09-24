@@ -17,6 +17,8 @@
     { "code": "CMH.JOBS.EXECUTION_FAILED", "retryable": false, "messageKey": "errors.jobs.executionFailed" },
     { "code": "CMH.MEDIA.QUOTA_EXCEEDED", "retryable": true, "messageKey": "errors.media.quotaExceeded" },
     { "code": "CMH.NETWORK.TARGET_DENIED", "retryable": false, "messageKey": "errors.network.targetDenied" },
+    { "code": "CMH.NETWORK.QUOTA_EXCEEDED", "retryable": true, "messageKey": "errors.network.quotaExceeded" },
+    { "code": "CMH.NETWORK.RESPONSE_TOO_LARGE", "retryable": false, "messageKey": "errors.network.responseTooLarge" },
     { "code": "CMH.PAGINATION.INVALID", "retryable": false, "messageKey": "errors.pagination.invalid" },
     { "code": "CMH.PROTOCOL.BACKPRESSURE_LIMIT", "retryable": true, "messageKey": "errors.protocol.backpressureLimit" },
     { "code": "CMH.PROTOCOL.DEADLINE_EXCEEDED", "retryable": true, "messageKey": "errors.protocol.deadlineExceeded" },

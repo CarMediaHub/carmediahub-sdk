@@ -62,3 +62,18 @@ test("job lifecycle errors are part of the public v0 contract", async () => {
     messageKey: "errors.jobs.executionFailed"
   });
 });
+
+test("network resource errors are part of the public v0 contract", async () => {
+  const catalog = await loadCatalog();
+  const entries = new Map(catalog.errors.map((entry) => [entry.code, entry]));
+  assert.deepEqual(entries.get("CMH.NETWORK.QUOTA_EXCEEDED"), {
+    code: "CMH.NETWORK.QUOTA_EXCEEDED",
+    retryable: true,
+    messageKey: "errors.network.quotaExceeded"
+  });
+  assert.deepEqual(entries.get("CMH.NETWORK.RESPONSE_TOO_LARGE"), {
+    code: "CMH.NETWORK.RESPONSE_TOO_LARGE",
+    retryable: false,
+    messageKey: "errors.network.responseTooLarge"
+  });
+});

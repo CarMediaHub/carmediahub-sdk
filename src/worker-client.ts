@@ -1,6 +1,7 @@
 import net from "node:net";
 import crypto from "node:crypto";
 import { encodeFrame, FrameDecoder } from "./wire.js";
+import { CmhError } from "./error.js";
 import type { BrowserService, BrowserSession, BrowserSessionRequest, BrowserTask, BrowserTaskRequest, CapabilityName, CatalogEntry, CatalogQuery, CatalogService, DataRecord, DisplayMode, DisplayService, HistoryEntry, HistoryQuery, HistoryService, MediaHlsRequest, MediaProbe, MediaService, MediaSourceListRequest, MediaSourceListResult, MediaSourceProbe, MediaSourceReadRequest, MediaSourceReadResult, MediaSourceService, MediaSourceStat, MediaSourcePlaybackSession, MediaTransformRequest, NetworkRequest, NetworkResponse, NetworkService, Notification, NotificationService, PlaybackSession, PlatformContext, PluginDataMigration, PluginDataStore, PluginJob, RpcRequest, RpcResponse, WorkerContext } from "./types.js";
 
 export interface WorkerClientOptions {
@@ -186,7 +187,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       createPlayback: async (sourceHandle: string, itemHandle: string) => call("mediaSource.createPlayback", { sourceHandle, itemHandle }).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourcePlaybackSession; }),
       read: async (input: MediaSourceReadRequest) => call("mediaSource.read", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as MediaSourceReadResult; })
     }),
-    network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as NetworkResponse; }) }),
+    network: () => ({ request: async (input: NetworkRequest) => call("network.request", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as NetworkResponse; }) }),
     browser: () => ({
       request: async (input: BrowserSessionRequest) => call("browser.session.request", input).then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return response.result as BrowserSession; }),
       list: async () => call("browser.session.list").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { sessions: readonly BrowserSession[] }).sessions; }),
