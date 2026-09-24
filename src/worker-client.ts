@@ -45,7 +45,8 @@ export interface WorkerClient {
   browser(): BrowserService;
   notifications(): NotificationService;
   onGatewayRequest(handler: (request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown): void;
-  onContextChanged(handler: (context: WorkerContext) => void): void;
+  /** Subscribe to Core context updates; return the disposer when the subscriber is no longer needed. */
+  onContextChanged(handler: (context: WorkerContext) => void): () => void;
 }
 
 function request(id: string, installationId: string, method: string, params?: unknown): RpcRequest {
@@ -59,7 +60,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
   const timeoutMs = options.timeoutMs ?? 30_000;
   let gatewayHandler: ((request: GatewayWorkerRequest, signal: AbortSignal) => Promise<GatewayWorkerResponse | unknown> | GatewayWorkerResponse | unknown) | undefined;
   let currentContext: WorkerContext;
-  let contextChangedHandler: ((context: WorkerContext) => void) | undefined;
+  const contextChangedHandlers = new Set<(context: WorkerContext) => void>();
   const activeGateway = new Map<string, AbortController>();
   const pending = new Map<string, { resolve(value: RpcResponse): void; reject(error: Error): void }>();
   const fail = (error: Error) => { for (const entry of pending.values()) entry.reject(error); pending.clear(); };
@@ -84,7 +85,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
           const changed = (rpc.params as { context?: unknown } | undefined)?.context;
           if (isWorkerContext(changed)) {
             currentContext = changed;
-            contextChangedHandler?.(changed);
+            for (const handler of contextChangedHandlers) handler(changed);
           }
           continue;
         }
@@ -195,7 +196,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       markAllRead: async () => call("notifications.markAllRead").then((response) => { if (response.error !== undefined) throw new Error(response.error.messageKey); return (response.result as { marked: number }).marked; })
     }),
     onGatewayRequest: (handler) => { gatewayHandler = handler; },
-    onContextChanged: (handler) => { contextChangedHandler = handler; }
+    onContextChanged: (handler) => { contextChangedHandlers.add(handler); return () => contextChangedHandlers.delete(handler); }
   };
 }
 

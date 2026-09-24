@@ -131,8 +131,16 @@ test("worker client applies broker context changes without reconnecting", async 
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(address, resolve); });
   try {
     const client = await connectWorkerClient({ endpoint: address, installationId: "plugin", runtimeCredential: "credential" });
-    const changed = new Promise<void>((resolve) => client.onContextChanged((context) => { assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); assert.equal(client.context.policyVersion, 2); resolve(); }));
+    let callbacks = 0;
+    const changed = new Promise<void>((resolve) => {
+      client.onContextChanged((context) => { assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); assert.equal(client.context.policyVersion, 2); callbacks += 1; if (callbacks === 2) resolve(); });
+      client.onContextChanged((context) => { assert.equal(context.locale, "ko"); assert.equal(context.theme, "dark"); callbacks += 1; if (callbacks === 2) resolve(); });
+      const dispose = client.onContextChanged(() => { callbacks += 100; });
+      assert.equal(typeof dispose, "function");
+      dispose();
+    });
     await changed;
+    assert.equal(callbacks, 2);
     client.close();
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
