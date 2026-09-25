@@ -156,6 +156,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
       delete: async (collection: string, key: string) => call("data.delete", { collection, key }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { deleted: boolean }).deleted; }),
       list: async <T>(collection: string, options: { prefix?: string; limit?: number } = {}) => call("data.list", { collection, ...options }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { records: readonly DataRecord<T>[] }).records; }),
       migrate: async (input: { version: number; name: string }) => call("data.migrate", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { migration: PluginDataMigration }).migration; }),
+      migrateBatch: async (inputs: readonly { version: number; name: string }[]) => call("data.migrateBatch", { migrations: inputs }).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { migrations: readonly PluginDataMigration[] }).migrations; }),
       migrations: async () => call("data.migrations").then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { migrations: readonly PluginDataMigration[] }).migrations; })
     }),
     history: () => ({

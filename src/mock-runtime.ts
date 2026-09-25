@@ -59,6 +59,18 @@ export class MemoryRuntime implements PlatformRuntime {
         this.migrationData.set(input.version, migration);
         return migration;
       },
+      migrateBatch: async (inputs) => {
+        const snapshot = new Map(this.migrationData);
+        try {
+          const result: PluginDataMigration[] = [];
+          for (const input of inputs) result.push(await this.database().migrate(input));
+          return result;
+        } catch (error) {
+          this.migrationData.clear();
+          for (const [version, migration] of snapshot) this.migrationData.set(version, migration);
+          throw error;
+        }
+      },
       migrations: async () => [...this.migrationData.values()].sort((left, right) => left.version - right.version)
     };
   }

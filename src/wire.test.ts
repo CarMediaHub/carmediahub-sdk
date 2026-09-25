@@ -82,6 +82,6 @@ test("allows only opaque browser session methods", () => {
 });
 
 test("allows only logical plugin data methods", () => {
-  for (const method of ["data.get", "data.put", "data.delete", "data.list", "data.migrate", "data.migrations"]) assert.doesNotThrow(() => validateWorkerRequest({ ...request, method }));
+  for (const method of ["data.get", "data.put", "data.delete", "data.list", "data.migrate", "data.migrateBatch", "data.migrations"]) assert.doesNotThrow(() => validateWorkerRequest({ ...request, method }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "data.sql" }), (error: unknown) => error instanceof CmhError && error.code === "CMH.CAPABILITY.DENIED");
 });

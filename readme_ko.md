@@ -40,3 +40,4 @@ pnpm verify
 ```
 
 `pnpm verify`는 타입 검사, 계약 테스트와 SDK 빌드를 순서대로 실행합니다.
+- 버전이 지정된 플러그인 데이터 마이그레이션을 위한 원자적 `database().migrateBatch()`를 제공합니다. 트랜잭션과 범위는 Core가 관리합니다.

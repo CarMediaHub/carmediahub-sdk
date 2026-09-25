@@ -86,6 +86,7 @@ export interface PluginDataStore {
   /** Lists records in key order; prefix is matched literally, not as a SQL pattern. */
   list<T>(collection: string, options?: { prefix?: string; limit?: number }): Promise<readonly DataRecord<T>[]>;
   migrate(input: { version: number; name: string }): Promise<PluginDataMigration>;
+  migrateBatch(inputs: readonly { version: number; name: string }[]): Promise<readonly PluginDataMigration[]>;
   migrations(): Promise<readonly PluginDataMigration[]>;
 }
 

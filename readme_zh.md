@@ -40,3 +40,4 @@ pnpm verify
 ```
 
 `pnpm verify` 会依次执行类型检查、契约测试和 SDK 构建。
+- 提供 `database().migrateBatch()` 原子批量迁移接口；事务和作用域由 Core 统一管理。

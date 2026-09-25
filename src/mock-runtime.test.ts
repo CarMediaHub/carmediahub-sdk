@@ -43,6 +43,13 @@ test("records idempotent logical data migrations", async () => {
   await assert.rejects(() => runtime.database().migrate({ version: 1, name: "different" }));
 });
 
+test("rolls back a logical migration batch when one entry conflicts", async () => {
+  const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["db"] }, new Map());
+  await runtime.database().migrate({ version: 1, name: "initial-settings" });
+  await assert.rejects(() => runtime.database().migrateBatch([{ version: 2, name: "second" }, { version: 1, name: "conflict" }]));
+  assert.deepEqual((await runtime.database().migrations()).map((item) => item.version), [1]);
+});
+
 test("keeps mock data validation and ordering aligned with Core adapters", async () => {
   const runtime = new MemoryRuntime({ ...context, grantedCapabilities: ["db"] });
   await runtime.database().put("settings", "z-last", { value: 1 });

@@ -12,6 +12,7 @@ Plugins use these public contracts without importing Core internals.
 - `onContextChanged`: plugins can subscribe to Core preference changes without implementing a second language or display settings system. It supports multiple subscribers and returns a disposer for teardown.
 - `normalizeLocale`, `localeFallbacks` and `localize`: shared locale aliases and requested-locale/language/English fallback for plugin text.
 - Capability APIs for scoped data, media, read-only media sources, history, catalog, display, jobs, notifications, network, and events.
+- Atomic `database().migrateBatch()` for versioned plugin data migrations; Core owns the transaction and scope.
 - `mediaSources()`: bounded `list`/`stat`/`probe`/`createPlayback`/`read` operations using Core-owned opaque source and item handles. Plugins never receive WebDAV URLs, endpoints, host paths, credentials, or write/delete operations.
 - `WorkerClient.database()` (provided by Core v0.1+): logical `get`/`put`/`delete`/`list` operations through the Broker. The capability grant belongs to the installed plugin instance; Core binds and rechecks every call against the current organization, user, and plugin-installation scope.
 - The same data API exposes an idempotent migration ledger (`migrate`/`migrations`) by version and logical name; it never accepts SQL or migration code.
