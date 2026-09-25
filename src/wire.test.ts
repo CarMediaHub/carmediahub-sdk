@@ -31,6 +31,7 @@ test("allows only the public jobs method namespace", () => {
 test("allows only the public history method namespace", () => {
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "history.record" }));
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "history.query" }));
+  assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "history.queryPage" }));
   assert.doesNotThrow(() => validateWorkerRequest({ ...request, method: "history.clear" }));
   assert.throws(() => validateWorkerRequest({ ...request, method: "history.sql" }));
 });

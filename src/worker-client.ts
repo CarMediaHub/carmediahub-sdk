@@ -161,6 +161,7 @@ export async function connectWorkerClient(options: WorkerClientOptions): Promise
     history: () => ({
       record: async (input) => call("history.record", input).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as HistoryEntry; }),
       query: async (options = {}) => call("history.query", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { entries: readonly HistoryEntry[] }).entries; }),
+      queryPage: async (options = {}) => call("history.queryPage", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return response.result as { entries: readonly HistoryEntry[]; total: number }; }),
       clear: async (options = {}) => call("history.clear", options).then((response) => { if (response.error !== undefined) throw new CmhError(response.error); return (response.result as { cleared: number }).cleared; })
     }),
     catalog: () => ({

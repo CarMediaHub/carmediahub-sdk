@@ -102,12 +102,14 @@ export class MemoryRuntime implements PlatformRuntime {
         await store.put("history", entry.id, entry);
         return entry;
       },
-      query: async (options: HistoryQuery = {}) => {
+      query: async (options: HistoryQuery = {}) => (await this.history().queryPage(options)).entries,
+      queryPage: async (options: HistoryQuery = {}) => {
         const records = await store.list<HistoryEntry>("history", { limit: 500 });
         const keyword = options.keyword?.trim().toLocaleLowerCase();
         const offset = Math.max(options.offset ?? 0, 0);
         const limit = Math.min(Math.max(options.limit ?? 100, 1), 500);
-        return records.map((record) => record.value).filter((entry) => (options.pluginId === undefined || entry.pluginId === options.pluginId) && (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.route}`.toLocaleLowerCase().includes(keyword))).sort((left, right) => right.visitedAt.localeCompare(left.visitedAt)).slice(offset, offset + limit);
+        const filtered = records.map((record) => record.value).filter((entry) => (options.pluginId === undefined || entry.pluginId === options.pluginId) && (options.category === undefined || entry.category === options.category) && (keyword === undefined || `${entry.title} ${entry.route}`.toLocaleLowerCase().includes(keyword))).sort((left, right) => right.visitedAt.localeCompare(left.visitedAt));
+        return { total: filtered.length, entries: filtered.slice(offset, offset + limit) };
       },
       clear: async (options = {}) => {
         const entries = await store.list<HistoryEntry>("history", { limit: 500 });

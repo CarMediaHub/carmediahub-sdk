@@ -153,6 +153,7 @@ test("history and catalog memory queries apply offset after filtering", async ()
   await runtime.history().record({ subjectType: "media", subjectId: "two", title: "Other", route: "/two", category: "video" });
   await runtime.history().record({ subjectType: "media", subjectId: "three", title: "Road three", route: "/three", category: "video" });
   assert.equal((await runtime.history().query({ keyword: "road", limit: 1, offset: 1 })).length, 1);
+  assert.equal((await runtime.history().queryPage({ keyword: "road", limit: 1, offset: 1 })).total, 2);
   await runtime.catalog().register({ subjectType: "media", subjectId: "one", title: "Road one", category: "video", route: "/one" });
   await runtime.catalog().register({ subjectType: "media", subjectId: "two", title: "Other", category: "video", route: "/two" });
   await runtime.catalog().register({ subjectType: "media", subjectId: "three", title: "Road three", category: "video", route: "/three" });

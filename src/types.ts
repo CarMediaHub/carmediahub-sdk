@@ -110,9 +110,12 @@ export interface HistoryQuery {
   offset?: number;
 }
 
+export interface HistoryPage { entries: readonly HistoryEntry[]; total: number; }
+
 export interface HistoryService {
   record(input: Omit<HistoryEntry, "id" | "visitedAt" | "pluginId" | "sourceDevice"> & { sourceDevice?: DisplayContext["deviceClass"] }): Promise<HistoryEntry>;
   query(options?: HistoryQuery): Promise<readonly HistoryEntry[]>;
+  queryPage(options?: HistoryQuery): Promise<HistoryPage>;
   clear(options?: Pick<HistoryQuery, "pluginId" | "category">): Promise<number>;
 }
 

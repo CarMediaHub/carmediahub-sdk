@@ -4,7 +4,7 @@ import type { RpcRequest } from "./types.js";
 export const MAX_RPC_FRAME_BYTES = 1024 * 1024;
 const allowedPrefixes = ["broker.", "worker.", "lifecycle.", "context.", "capability.", "jobs.", "history.", "catalog.", "display.", "notifications.", "gateway.", "event.", "health.", "diagnostics.", "media.", "mediaSource.", "network.", "browser.", "data.", "$/cancelRequest"];
 const allowedJobMethods = new Set(["jobs.enqueue", "jobs.list", "jobs.cancel"]);
-const allowedHistoryMethods = new Set(["history.record", "history.query", "history.clear"]);
+const allowedHistoryMethods = new Set(["history.record", "history.query", "history.queryPage", "history.clear"]);
 const allowedCatalogMethods = new Set(["catalog.register", "catalog.query", "catalog.remove"]);
 const allowedDisplayMethods = new Set(["display.capabilities", "display.requestMode"]);
 const allowedNotificationMethods = new Set(["notifications.publish", "notifications.list", "notifications.markRead", "notifications.markAllRead"]);
