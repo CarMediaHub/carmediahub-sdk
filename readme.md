@@ -18,6 +18,8 @@ Plugins use these public contracts without importing Core internals.
 - `WorkerClient` and the Wire Protocol: plugins use logical routes through the Broker without public listeners or access to database connections, host paths, or session cookies.
 - `Memory Runtime` for contract tests. It is not a production storage or media executor.
 
+Manifest `sdk` values use deterministic v0 range syntax: exact `x.y.z`, caret `^x.y.z`, or tilde `~x.y.z`. The SDK validator rejects other forms; Core and package tooling reject a package whose declared range does not include the installed SDK contract version.
+
 ## Runtime boundary
 
 A Manifest requests capabilities; the grant is stored on the deployment's plugin installation and may only be reduced by an administrator. It is not a general system-call interface. Plugins cannot submit shell commands, host paths, arbitrary environment variables, database DSNs, or undeclared capabilities. Core owns authentication, per-call scope, authorization, resource limits, and error redaction; plugins use only SDK-defined logical APIs.

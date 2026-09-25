@@ -3,6 +3,7 @@
 This directory contains review-stage public contracts for the CarMediaHub SDK.
 
 - `manifest.schema.json` is the machine-readable form of the current TypeScript `PluginManifest` validator; package tooling should validate against both this schema and the SDK runtime validator.
+- The `sdk` field accepts only an exact, caret, or tilde semver range. v0 tooling resolves compatibility against the installed SDK contract version `0.1.0`; it does not treat `latest`, arbitrary expressions, or an incompatible major/minor range as valid.
 - `errors.json` defines the stable error catalog proposed for v0.
 - The `jobs` capability is scoped to the current user and plugin installation. The initial limit is 10 active jobs per scope, with 64 KiB limits for JSON payloads and results. Size and queue failures use the stable entries `CMH.JOBS.QUEUE_FULL`, `CMH.JOBS.PAYLOAD_TOO_LARGE`, and `CMH.JOBS.RESULT_TOO_LARGE`; interrupted work and handler failures use `CMH.JOBS.INTERRUPTED` and `CMH.JOBS.EXECUTION_FAILED`.
 - The `history` capability provides scoped `record`, `query`, and `clear` operations. Plugins submit a subject and display metadata; Core owns user isolation, retention, filtering, and deletion.

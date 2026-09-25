@@ -4,6 +4,7 @@ const manifestId = /^[a-z][a-z0-9-]{2,63}$/;
 const routePath = /^\/[a-zA-Z0-9/_-]*$/;
 const workerEntry = /^\.\/[a-zA-Z0-9_./-]+$/;
 const semver = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+const sdkRange = /^(?:\^|~)?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const knownCapabilities = new Set<CapabilityName>([
   "config", "secrets", "db", "storage", "media", "media-source", "history", "catalog", "display", "jobs", "events",
   "diagnostics", "gateway", "network", "browser", "transfer"
@@ -22,6 +23,28 @@ export class ManifestValidationError extends Error {
     super(`Invalid plugin manifest: ${issues.join("; ")}`);
     this.name = "ManifestValidationError";
   }
+}
+
+/** Version of the public SDK contract implemented by this package. */
+export const SDK_CONTRACT_VERSION = "0.1.0" as const;
+
+function parsedVersion(value: string): [number, number, number] | undefined {
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?$/u.exec(value);
+  return match === null ? undefined : [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+/** Check the deliberately small, deterministic SDK range syntax supported by v0. */
+export function isSdkRangeCompatible(range: string, version = SDK_CONTRACT_VERSION): boolean {
+  if (!sdkRange.test(range)) return false;
+  const requested = parsedVersion(version);
+  const match = /^(\^|~)?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/u.exec(range);
+  const declared = match === null ? undefined : parsedVersion(match[2] ?? "");
+  if (requested === undefined || declared === undefined) return false;
+  if (match === null) return false;
+  const operator = match[1] ?? "exact";
+  if (operator === "exact") return requested.every((part, index) => part === declared[index]);
+  if (operator === "~") return requested[0] === declared[0] && requested[1] === declared[1] && requested[2] >= declared[2];
+  return requested[0] === declared[0] && requested[1] >= declared[1];
 }
 
 function validLocalized(value: unknown): value is Record<Locale, string> {
@@ -62,7 +85,7 @@ export function validateManifest(value: unknown): asserts value is PluginManifes
   const manifest = value as Partial<PluginManifest>;
   if (typeof manifest.id !== "string" || !manifestId.test(manifest.id)) issues.push("id must be a lowercase package identifier");
   if (typeof manifest.version !== "string" || !semver.test(manifest.version)) issues.push("version must be semver");
-  if (typeof manifest.sdk !== "string" || manifest.sdk.length === 0) issues.push("sdk is required");
+  if (typeof manifest.sdk !== "string" || !sdkRange.test(manifest.sdk)) issues.push("sdk must be a supported semver range");
   if (!validLocalized(manifest.name)) issues.push("name must include en, zh-CN, and ko");
   if (!validLocalized(manifest.description)) issues.push("description must include en, zh-CN, and ko");
   if (!knownCategories.has(manifest.category as PluginManifest["category"])) issues.push("category is not supported");

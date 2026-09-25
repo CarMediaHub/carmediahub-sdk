@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { ManifestValidationError, validateManifest } from "./manifest.js";
+import { ManifestValidationError, SDK_CONTRACT_VERSION, isSdkRangeCompatible, validateManifest } from "./manifest.js";
 import type { PluginManifest } from "./types.js";
 
 const manifest: PluginManifest = {
@@ -21,6 +21,15 @@ const manifest: PluginManifest = {
 test("validates a complete public manifest", () => {
   assert.doesNotThrow(() => validateManifest(manifest));
   assert.doesNotThrow(() => validateManifest({ ...manifest, capabilities: ["network", "secrets"] }));
+});
+
+test("validates the supported SDK range syntax and compatibility", () => {
+  assert.equal(SDK_CONTRACT_VERSION, "0.1.0");
+  assert.equal(isSdkRangeCompatible("^0.1.0"), true);
+  assert.equal(isSdkRangeCompatible("~0.1.0"), true);
+  assert.equal(isSdkRangeCompatible("^0.2.0"), false);
+  assert.equal(isSdkRangeCompatible("latest"), false);
+  assert.throws(() => validateManifest({ ...manifest, sdk: "latest" }), ManifestValidationError);
 });
 
 test("published JSON Schema describes the current TypeScript manifest contract", () => {
