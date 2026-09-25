@@ -15,7 +15,7 @@ const bindingName = /^[a-z][a-z0-9-]{1,63}$/;
 const componentId = /^[a-z][a-z0-9-]{1,63}$/;
 const componentRoles = new Set<CoreComponentRole>(["storage-service", "webdav", "media-processing", "archive", "network-egress", "browser-engine"]);
 const locales: readonly Locale[] = ["en", "zh-CN", "ko"];
-const methods = new Set<PluginRoute["methods"][number]>(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]);
+const methods = new Set<PluginRoute["methods"][number]>(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "PROPFIND"]);
 
 export class ManifestValidationError extends Error {
   constructor(readonly issues: readonly string[]) {

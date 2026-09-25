@@ -269,7 +269,7 @@ export interface MediaSourceService {
 
 export interface NetworkRequest {
   binding: string;
-  method: "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE";
+  method: "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE" | "PROPFIND";
   path: string;
   headers?: Record<string, string>;
   body?: string;
@@ -431,7 +431,7 @@ export interface RpcResponse<T = unknown> {
 
 export interface PluginRoute {
   path: string;
-  methods: readonly ("GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE")[];
+  methods: readonly ("GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE" | "PROPFIND")[];
 }
 
 export type CoreComponentRole = "storage-service" | "webdav" | "media-processing" | "archive" | "network-egress" | "browser-engine";

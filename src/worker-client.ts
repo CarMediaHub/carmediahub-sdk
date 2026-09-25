@@ -12,7 +12,7 @@ export interface WorkerClientOptions {
 }
 
 export interface GatewayWorkerRequest {
-  method: "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE";
+  method: "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE" | "PROPFIND";
   path: string;
   query?: Record<string, string | string[]>;
   headers?: Record<string, string>;
